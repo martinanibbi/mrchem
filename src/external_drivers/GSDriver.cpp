@@ -23,17 +23,17 @@
  * <https://mrchem.readthedocs.io/>
  */
 
+#include "MRCPP/MWOperators"
+
 #include "GSDriver.h"
 #include "qmoperators/one_electron/KineticOperator.h"
 #include "qmoperators/one_electron/NuclearOperator.h"
-#include "tensor/RankZeroOperator.h"
 #include "qmfunctions/orbital_utils.h"
 
 namespace mrchem {
 
-class FockBuiulder;
-class MomentumOperator;
-class RankZeroOperator;
+class FockBuilder;
+//class PoissonOperator;
 
  /** @brief Calculates and stores the one- and two-electron integrals for given orbitals
  *
@@ -44,13 +44,13 @@ class RankZeroOperator;
  * 
  */
 
-void GSDriver::set_integrals(OrbitalVector &Phi, FockBuilder &F){
+void GSDriver::set_integrals(OrbitalVector &Phi, FockBuilder &F,  mrcpp::PoissonOperator &P){
     // operators
     KineticOperator K(F.momentum());
     NuclearOperator V = *(F.getNuclearOperator());
     // set the one- and two-body integrals
     GSDriver::set_one_body_integrals(Phi, K, V);
-    //GSDriver::set_two_body_integrals(Phi, F);
+    GSDriver::set_two_body_integrals(Phi, P);
 }
 
 
@@ -63,16 +63,35 @@ void GSDriver::set_one_body_integrals(OrbitalVector &Phi, KineticOperator &K, Nu
                                 + orbital::calc_overlap_matrix(Phi, VPhi);
 }
 
-void GSDriver::set_two_body_integrals(OrbitalVector &Phi, FockBuilder &F){
+void GSDriver::set_two_body_integrals(OrbitalVector &Phi,  mrcpp::PoissonOperator &P){
     int n_orb = Phi.size();
     *(this->two_body_integrals) = ComplexTensorR4(n_orb, n_orb, n_orb, n_orb);
     this->two_body_integrals->setZero();
 
-    for (int p = 0; p < n_orb; p++) {
-        for (int q = 0; q < n_orb; q++) {
-            for (int r = 0; r < n_orb; r++) {
-                for (int s = 0; s < n_orb; s++) {
-                    (*this->two_body_integrals)(p,q,r,s) = std::complex<double>(1.0,0.0);
+    for (int j = 0; j < n_orb; j++) {
+        for (int l = 0; l < n_orb; l++) {
+            // calculate rho_jl = Phi_j^+ Phi_l
+            Orbital rho_jl = Phi[j].paramCopy();
+            mrcpp::cplxfunc::multiply(rho_jl, Phi[j].dagger(), Phi[l], this->prec, true, true);
+            // calculate V_jl = P(rho_jl)
+            Orbital Vjl = rho_jl.paramCopy();
+            if (rho_jl.hasReal()) {
+                Vjl.alloc(NUMBER::Real);
+                mrcpp::apply(this->prec, Vjl.real(), P, rho_jl.real());
+            }
+            if (rho_jl.hasImag()) {
+                Vjl.alloc(NUMBER::Imag);
+                mrcpp::apply(this->prec, Vjl.imag(), P, rho_jl.imag());
+            }
+            rho_jl.release();
+            for (int i = 0; i < n_orb; i++) {
+                // calculate <Phi_i|V_jl|
+                Orbital tmp_i = Phi[i].paramCopy();
+                mrcpp::cplxfunc::multiply(tmp_i, Phi[i].dagger(), Vjl, this->prec, true, true);
+                for (int k = 0; k < n_orb; k++) {
+                    // calculate (ij|kl) = <Phi_i|V_jl|Phi_k>
+                    // BUG: add factor 4pi??
+                    (*this->two_body_integrals)(i,j,k,l) = orbital::dot(tmp_i, Phi[k]);
                 }
             }
         }

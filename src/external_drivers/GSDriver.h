@@ -31,6 +31,8 @@
 #include "qmfunctions/Orbital.h"
 #include "qmoperators/two_electron/FockBuilder.h"
 
+//using PoissonOperator = mrcpp::PoissonOperator;
+
 namespace mrchem {
 
 class FockBuilder;
@@ -40,7 +42,7 @@ public:
     GSDriver() = default;
     virtual ~GSDriver() = default;
 
-    void set_integrals(OrbitalVector &Phi, FockBuilder &F);
+    void set_integrals(OrbitalVector &Phi, FockBuilder &F, mrcpp::PoissonOperator &P);
     std::shared_ptr<ComplexMatrix> get_one_body_integrals(){return this->one_body_integrals;}
     std::shared_ptr<ComplexTensorR4> get_two_body_integrals(){return this->two_body_integrals;}
     
@@ -50,10 +52,11 @@ public:
 protected:
     std::shared_ptr<ComplexMatrix> one_body_integrals{};
     std::shared_ptr<ComplexTensorR4> two_body_integrals{};
+    void set_one_body_integrals(OrbitalVector &Phi, KineticOperator &K, NuclearOperator &V);
+    void set_two_body_integrals(OrbitalVector &Phi, mrcpp::PoissonOperator &P);
 
 private:
-    void set_one_body_integrals(OrbitalVector &Phi, KineticOperator &K, NuclearOperator &V);
-    void set_two_body_integrals(OrbitalVector &Phi, FockBuilder &F);
+    float prec=1e-3;
 };
 
 } // namespace mrchem
