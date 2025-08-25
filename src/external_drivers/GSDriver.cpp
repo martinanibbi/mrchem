@@ -65,14 +65,14 @@ void GSDriver::set_one_body_integrals(OrbitalVector &Phi, KineticOperator &K, Nu
 
 void GSDriver::set_two_body_integrals(OrbitalVector &Phi, FockBuilder &F){
     int n_orb = Phi.size();
-    this->two_body_integrals.resize(n_orb, std::vector<std::vector<std::vector<double>>>(n_orb, std::vector<std::vector<double>>(n_orb, std::vector<double>(n_orb, 0.0))));
-    //CoulombOperator *J = F.getCoulombOperator();
-    //ExchangeOperator *K = F.getExchangeOperator();
-    for (int p = 0; p < n_orb; p++){
-        for (int q = 0; q < n_orb; q++){
-            for (int r = 0; r < n_orb; r++){
-                for (int s = 0; s < n_orb; s++){
-                    this->two_body_integrals[p][q][r][s] = 1; //J->calc(p, q, r, s) - F.exact_exchange * K->calc(p, q, r, s);
+    *(this->two_body_integrals) = ComplexTensorR4(n_orb, n_orb, n_orb, n_orb);
+    this->two_body_integrals->setZero();
+
+    for (int p = 0; p < n_orb; p++) {
+        for (int q = 0; q < n_orb; q++) {
+            for (int r = 0; r < n_orb; r++) {
+                for (int s = 0; s < n_orb; s++) {
+                    (*this->two_body_integrals)(p,q,r,s) = std::complex<double>(1.0,0.0);
                 }
             }
         }

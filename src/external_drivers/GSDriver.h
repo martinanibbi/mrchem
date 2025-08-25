@@ -41,12 +41,15 @@ public:
     virtual ~GSDriver() = default;
 
     void set_integrals(OrbitalVector &Phi, FockBuilder &F);
+    std::shared_ptr<ComplexMatrix> get_one_body_integrals(){return this->one_body_integrals;}
+    std::shared_ptr<ComplexTensorR4> get_two_body_integrals(){return this->two_body_integrals;}
+    
     virtual void optimize() = 0;
     virtual void get_rdms() = 0;
 
 protected:
     std::shared_ptr<ComplexMatrix> one_body_integrals{};
-    std::vector<std::vector<std::vector<std::vector<double>>>> two_body_integrals;
+    std::shared_ptr<ComplexTensorR4> two_body_integrals{};
 
 private:
     void set_one_body_integrals(OrbitalVector &Phi, KineticOperator &K, NuclearOperator &V);
