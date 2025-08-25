@@ -27,25 +27,30 @@
 
 #include <vector>
 
+#include "mrchem.h"
 #include "qmfunctions/Orbital.h"
-
+#include "qmoperators/two_electron/FockBuilder.h"
 
 namespace mrchem {
+
+class FockBuilder;
 
 class GSDriver{
 public:
     GSDriver() = default;
     virtual ~GSDriver() = default;
 
-    void set_integrals(const OrbitalVector &Phi);
+    void set_integrals(OrbitalVector &Phi, FockBuilder &F);
     virtual void optimize() = 0;
     virtual void get_rdms() = 0;
 
 protected:
-    // better to use something else? Create its own class?
-    std::vector<std::vector<double>> one_body_integrals;
+    std::shared_ptr<ComplexMatrix> one_body_integrals{};
     std::vector<std::vector<std::vector<std::vector<double>>>> two_body_integrals;
 
+private:
+    void set_one_body_integrals(OrbitalVector &Phi, KineticOperator &K, NuclearOperator &V);
+    void set_two_body_integrals(OrbitalVector &Phi, FockBuilder &F);
 };
 
 } // namespace mrchem

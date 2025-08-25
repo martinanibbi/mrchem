@@ -24,8 +24,16 @@
  */
 
 #include "GSDriver.h"
+#include "qmoperators/one_electron/KineticOperator.h"
+#include "qmoperators/one_electron/NuclearOperator.h"
+#include "tensor/RankZeroOperator.h"
+#include "qmfunctions/orbital_utils.h"
 
 namespace mrchem {
+
+class FockBuiulder;
+class MomentumOperator;
+class RankZeroOperator;
 
  /** @brief Calculates and stores the one- and two-electron integrals for given orbitals
  *
@@ -36,26 +44,35 @@ namespace mrchem {
  * 
  */
 
-void GSDriver::set_integrals(const OrbitalVector &Phi){
+void GSDriver::set_integrals(OrbitalVector &Phi, FockBuilder &F){
+    // operators
+    KineticOperator K(F.momentum());
+    NuclearOperator V = *(F.getNuclearOperator());
+    // set the one- and two-body integrals
+    GSDriver::set_one_body_integrals(Phi, K, V);
+    //GSDriver::set_two_body_integrals(Phi, F);
+}
+
+
+// Private
+
+void GSDriver::set_one_body_integrals(OrbitalVector &Phi, KineticOperator &K, NuclearOperator &V){
+    OrbitalVector KPhi = K(Phi);
+    OrbitalVector VPhi = V(Phi);
+    *(this->one_body_integrals) = orbital::calc_overlap_matrix(Phi, KPhi)
+                                + orbital::calc_overlap_matrix(Phi, VPhi);
+}
+
+void GSDriver::set_two_body_integrals(OrbitalVector &Phi, FockBuilder &F){
     int n_orb = Phi.size();
-    one_body_integrals.resize(n_orb, std::vector<double>(n_orb, 0.0));
-    two_body_integrals.resize(n_orb, std::vector<std::vector<std::vector<double>>>(n_orb, std::vector<std::vector<double>>(n_orb, std::vector<double>(n_orb, 0.0))));
-
-    // Compute one-body integrals
-    for (int p = 0; p < n_orb; ++p) {
-        for (int q = 0; q < n_orb; ++q) {
-            // Placeholder for actual integral computation
-            one_body_integrals[p][q] = 1;
-        }
-    }
-
-    // Compute two-body integrals
-    for (int p = 0; p < n_orb; ++p) {
-        for (int q = 0; q < n_orb; ++q) {
-            for (int r = 0; r < n_orb; ++r) {
-                for (int s = 0; s < n_orb; ++s) {
-                    // Placeholder for actual integral computation
-                    two_body_integrals[p][q][r][s] = 1;
+    this->two_body_integrals.resize(n_orb, std::vector<std::vector<std::vector<double>>>(n_orb, std::vector<std::vector<double>>(n_orb, std::vector<double>(n_orb, 0.0))));
+    //CoulombOperator *J = F.getCoulombOperator();
+    //ExchangeOperator *K = F.getExchangeOperator();
+    for (int p = 0; p < n_orb; p++){
+        for (int q = 0; q < n_orb; q++){
+            for (int r = 0; r < n_orb; r++){
+                for (int s = 0; s < n_orb; s++){
+                    this->two_body_integrals[p][q][r][s] = 1; //J->calc(p, q, r, s) - F.exact_exchange * K->calc(p, q, r, s);
                 }
             }
         }
