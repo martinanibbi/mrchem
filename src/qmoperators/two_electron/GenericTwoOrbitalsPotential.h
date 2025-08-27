@@ -35,7 +35,8 @@ public:
     explicit GenericTwoOrbitalsPotential(std::shared_ptr<mrcpp::PoissonOperator> P, std::shared_ptr<OrbitalVector> Phi = nullptr, bool mpi_share = false);
     ~GenericTwoOrbitalsPotential() override = default;
 
-    void setup(int j, int l, double prec);
+    void setup(std::shared_ptr<OrbitalVector> Phi, double prec);
+    void set_pair(int j, int l);
 
     Orbital apply(Orbital inp) override;
     

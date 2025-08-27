@@ -35,15 +35,20 @@ GenericTwoOrbitalsPotential::GenericTwoOrbitalsPotential(std::shared_ptr<mrcpp::
         , orbitals(Phi)
         , poisson(P) {}
 
-void GenericTwoOrbitalsPotential::setup(int j, int l, double prec){
+void GenericTwoOrbitalsPotential::setup(std::shared_ptr<OrbitalVector> Phi, double prec){
+    if (prec <= 0.0) throw std::runtime_error("GenericTwoOrbitalsPotential::set_pair_orbitals: precision must be positive");
+    // TODO: also change precision of Poisson?
+    this->prec = prec;
+    this->orbitals = Phi;
+}
+
+void GenericTwoOrbitalsPotential::set_pair(int j, int l){
     if (j<0 || j>=this->orbitals->size()) throw std::runtime_error("GenericTwoOrbitalsPotential::set_pair_orbitals: index j out of range");
     if (l<0 || l>=this->orbitals->size()) throw std::runtime_error("GenericTwoOrbitalsPotential::set_pair_orbitals: index l out of range");
-    if (prec <= 0.0) throw std::runtime_error("GenericTwoOrbitalsPotential::set_pair_orbitals: precision must be positive");
     if (j == this->j && l == this->l && abs(this->prec-prec)<1e-3) return; // already set
     // set new pair
     this->j = j;
     this->l = l;
-    this->prec = prec;
     this->g_jl = std::make_shared<Orbital>(this->calculate_g_jl());
 }
 

@@ -43,8 +43,12 @@ public:
     }
     virtual ~GenericTwoOrbitalsOperator() = default;
 
-    void setup(int j, int l, double prec){
-        potential->setup(j,l,prec);
+    void setup(std::shared_ptr<OrbitalVector> Phi, double prec){
+        potential->setup(Phi,prec);
+    }
+
+    void set_pair(int j, int l){
+        potential->set_pair(j,l);
     }
 
     Orbital apply(Orbital inp){
