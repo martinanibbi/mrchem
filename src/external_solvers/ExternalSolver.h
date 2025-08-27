@@ -37,10 +37,10 @@ namespace mrchem {
 
 class FockBuilder;
 
-class GSDriver{
+class ExternalSolver{
 public:
-    GSDriver() = default;
-    virtual ~GSDriver() = default;
+    ExternalSolver() = default;
+    virtual ~ExternalSolver() = default;
 
     void set_integrals(OrbitalVector &Phi, FockBuilder &F);
     std::shared_ptr<ComplexMatrix> get_one_body_integrals(){return this->one_body_integrals;}

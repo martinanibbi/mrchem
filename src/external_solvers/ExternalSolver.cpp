@@ -25,7 +25,7 @@
 
 #include "MRCPP/MWOperators"
 
-#include "GSDriver.h"
+#include "ExternalSolver.h"
 #include "qmoperators/one_electron/KineticOperator.h"
 #include "qmoperators/one_electron/NuclearOperator.h"
 #include "qmoperators/two_electron/GenericTwoOrbitalsOperator.h"
@@ -45,27 +45,27 @@ class FockBuilder;
  * 
  */
 
-void GSDriver::set_integrals(OrbitalVector &Phi, FockBuilder &F){
+void ExternalSolver::set_integrals(OrbitalVector &Phi, FockBuilder &F){
     // operators
     KineticOperator K(F.momentum());
     NuclearOperator V = *(F.getNuclearOperator());
     GenericTwoOrbitalsOperator g = *(F.getGenericTwoOrbitalsOperator());
     // set the one- and two-body integrals
-    GSDriver::set_one_body_integrals(Phi, K, V);
-    GSDriver::set_two_body_integrals(Phi, g);
+    ExternalSolver::set_one_body_integrals(Phi, K, V);
+    ExternalSolver::set_two_body_integrals(Phi, g);
 }
 
 
 // Private
 
-void GSDriver::set_one_body_integrals(OrbitalVector &Phi, KineticOperator &K, NuclearOperator &V){
+void ExternalSolver::set_one_body_integrals(OrbitalVector &Phi, KineticOperator &K, NuclearOperator &V){
     OrbitalVector KPhi = K(Phi);
     OrbitalVector VPhi = V(Phi);
     *(this->one_body_integrals) = orbital::calc_overlap_matrix(Phi, KPhi)
                                 + orbital::calc_overlap_matrix(Phi, VPhi);
 }
 
-void GSDriver::set_two_body_integrals(OrbitalVector &Phi,  GenericTwoOrbitalsOperator &g){
+void ExternalSolver::set_two_body_integrals(OrbitalVector &Phi,  GenericTwoOrbitalsOperator &g){
     int n_orb = Phi.size();
     *(this->two_body_integrals) = ComplexTensorR4(n_orb, n_orb, n_orb, n_orb);
     this->two_body_integrals->setZero();
