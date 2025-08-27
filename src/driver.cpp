@@ -57,6 +57,7 @@
 #include "qmoperators/one_electron/NuclearOperator.h"
 #include "qmoperators/one_electron/ZoraOperator.h"
 #include "qmoperators/one_electron/AZoraPotential.h"
+#include "qmoperators/two_electron/GenericTwoOrbitalsOperator.h"
 
 #include "qmoperators/one_electron/H_BB_dia.h"
 #include "qmoperators/one_electron/H_BM_dia.h"
@@ -77,6 +78,7 @@
 #include "scf_solver/GroundStateSolver.h"
 #include "scf_solver/KAIN.h"
 #include "scf_solver/LinearResponseSolver.h"
+#include "scf_solver/LagrangianSolver.h"
 
 #include "environment/Cavity.h"
 #include "environment/GPESolver.h"
@@ -85,6 +87,9 @@
 #include "environment/Permittivity.h"
 #include "surface_forces/SurfaceForce.h"
 #include "properties/hirshfeld/HirshfeldPartition.h"
+
+#include "external_solvers/ExternalSolver.h"
+#include "external_solvers/ChemTensorSolver.h"
 
 #include "mrdft/Factory.h"
 
@@ -889,6 +894,45 @@ json driver::rsp::run(const json &json_rsp, Molecule &mol) {
     return json_out;
 }
 
+
+/** @brief Run Lagrangian SCF calculation
+ *
+ * This function will run the Lagrangian SCF orbitals optimization
+ * with an external DMRG solver. Returns a JSON record of the calculation.
+ * 
+ */
+json driver::lag::run(const json &json_lag, Molecule &mol) {
+    print_utils::headline(0, "Computing Lagrangian SCF orbitals optimization");
+    json json_out = {{"success", true}};
+
+    if (json_lag.contains("properties")) driver::init_properties(json_lag["properties"], mol);
+
+    ///////////////////////////////////////////////////////////
+    ////////////////   Building Fock Operator   ///////////////
+    ///////////////////////////////////////////////////////////
+    FockBuilder F;
+    const auto &json_fock = json_lag["fock_operator"];
+    driver::build_fock_operator(json_fock, mol, F, 0);
+
+    ///////////////////////////////////////////////////////////
+    /////////////////   Building DMRG Driver   ////////////////
+    ///////////////////////////////////////////////////////////
+    ChemTensorSolver dmrg_solver;
+
+    ///////////////////////////////////////////////////////////
+    //////////////   Building Lagrangian Solver   /////////////
+    ///////////////////////////////////////////////////////////
+    LagrangianSolver solver;
+
+    json_out["lag_solver"] = solver.optimize(mol, F, dmrg_solver);
+
+
+
+    return json_out;
+}
+
+
+
 /** @brief Run initial guess calculation for the response orbitals
  *
  * This function will update the ground state orbitals and the Fock
@@ -1298,6 +1342,18 @@ void driver::build_fock_operator(const json &json_fock, Molecule &mol, FockBuild
         auto V_ext = std::make_shared<ElectricFieldOperator>(field, r_O);
         F.getExtOperator() = V_ext;
     }
+
+    ///////////////////////////////////////////////////////////
+    ///////////   Generic Two Orbitals Operator   /////////////
+    ///////////////////////////////////////////////////////////
+    if (json_fock.contains("generic_two_orbitals_operator")) {
+        //auto poisson_prec = json_fock["generic_two_orbitals_operator"]["poisson_prec"];
+        double poisson_prec = 1e-3;
+        auto P_p = std::make_shared<PoissonOperator>(*MRA, poisson_prec);
+        auto g = std::make_shared<GenericTwoOrbitalsOperator>(P_p);
+        F.getGenericTwoOrbitalsOperator() = g;
+    }
+    
     F.build(exx);
 }
 
