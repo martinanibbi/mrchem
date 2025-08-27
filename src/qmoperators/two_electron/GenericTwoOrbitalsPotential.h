@@ -35,18 +35,26 @@ public:
     explicit GenericTwoOrbitalsPotential(std::shared_ptr<mrcpp::PoissonOperator> P, std::shared_ptr<OrbitalVector> Phi = nullptr, bool mpi_share = false);
     ~GenericTwoOrbitalsPotential() override = default;
 
+    void setup(int j, int l, double prec);
+
+    Orbital apply(Orbital inp) override;
+    
     friend class GenericTwoOrbitalsOperator;
 
 protected:
     std::shared_ptr<OrbitalVector> orbitals;         
-    std::shared_ptr<mrcpp::PoissonOperator> poisson; 
+    std::shared_ptr<mrcpp::PoissonOperator> poisson;
+    int j;
+    int l;
+    double prec;
+    std::shared_ptr<Orbital> g_jl{nullptr};
 
     auto &getPoisson() { return this->poisson; }
 
     //void setup(double prec) override;
     //void clear() override;
 
-    Orbital g_jl(int j, int l, double prec);
+    Orbital calculate_g_jl();
 };
 
 } // namespace mrchem

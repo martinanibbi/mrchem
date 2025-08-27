@@ -33,11 +33,24 @@ namespace mrchem {
 
 class GenericTwoOrbitalsOperator: public RankZeroOperator{
 public:
-    explicit GenericTwoOrbitalsOperator(std::shared_ptr<mrcpp::PoissonOperator> &P, std::shared_ptr<OrbitalVector> Phi = nullptr, bool mpi_share = false){
+    explicit GenericTwoOrbitalsOperator(std::shared_ptr<mrcpp::PoissonOperator> P, std::shared_ptr<OrbitalVector> Phi = nullptr, bool mpi_share = false){
         potential = std::make_shared<GenericTwoOrbitalsPotential>(P, Phi, mpi_share);
+
+        // Invoke operator= to assign *this operator
+        RankZeroOperator &g = (*this);
+        g = potential;
+        g.name() = "g";
     }
     virtual ~GenericTwoOrbitalsOperator() = default;
-    
+
+    void setup(int j, int l, double prec){
+        potential->setup(j,l,prec);
+    }
+
+    Orbital apply(Orbital inp){
+        return potential->apply(inp);
+    }
+
 private:
     std::shared_ptr<GenericTwoOrbitalsPotential> potential{nullptr};
 };
