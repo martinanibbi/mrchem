@@ -25,48 +25,21 @@
 
 #pragma once
 
-#include <vector>
-
 #include "mrchem.h"
 #include "qmfunctions/Orbital.h"
 #include "qmoperators/two_electron/FockBuilder.h"
-
-//using PoissonOperator = mrcpp::PoissonOperator;
+#include "ExternalSolver.h"
 
 namespace mrchem {
 
-class FockBuilder;
-
-class ExternalSolver{
+class ChemTensorSolver: public ExternalSolver {
 public:
-    ExternalSolver() = default;
-    virtual ~ExternalSolver() = default;
+    ChemTensorSolver() = default;
+    ~ChemTensorSolver() override = default;
 
-    double get_energy(){return this->energy;}
-    void set_precision(double p){this->prec=p;}
+    void optimize() override;
+    void calculate_rdms() override;
 
-    void set_integrals(OrbitalVector &Phi, FockBuilder &F);
-    std::shared_ptr<ComplexMatrix> get_one_body_integrals(){return this->one_body_integrals;}
-    std::shared_ptr<ComplexTensorR4> get_two_body_integrals(){return this->two_body_integrals;}
-    std::shared_ptr<ComplexMatrix> get_one_rdm(){return this->one_rdm;}
-    std::shared_ptr<ComplexTensorR4> get_two_rdm(){return this->two_rdm;}
-
-    virtual void optimize() = 0;
-    virtual void calculate_rdms() = 0;
-
-protected:
-    double prec=1e-3;
-    double energy{};
-
-    std::shared_ptr<ComplexMatrix> one_body_integrals{};
-    std::shared_ptr<ComplexTensorR4> two_body_integrals{};
-    std::shared_ptr<ComplexMatrix> one_rdm{};
-    std::shared_ptr<ComplexTensorR4> two_rdm{};
-
-    void set_one_body_integrals(OrbitalVector &Phi, KineticOperator &K, NuclearOperator &V);
-    void set_two_body_integrals(OrbitalVector &Phi, GenericTwoOrbitalsOperator &g);
-
-    
 };
 
-} // namespace mrchem
+}
