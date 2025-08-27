@@ -43,7 +43,7 @@ public:
     virtual ~ExternalSolver() = default;
 
     double get_energy(){return this->energy;}
-    void set_precision(double p){this->prec=p;}
+    //void set_precision(double p){this->prec=p;}
 
     void set_integrals(OrbitalVector &Phi, FockBuilder &F);
     std::shared_ptr<ComplexMatrix> get_one_body_integrals(){return this->one_body_integrals;}
@@ -54,7 +54,7 @@ public:
     virtual void optimize() = 0;
 
 protected:
-    double prec=1e-3;
+    //double prec=1e-3;
     double energy{};
 
     std::shared_ptr<ComplexMatrix> one_body_integrals{};

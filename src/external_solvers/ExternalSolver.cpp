@@ -50,6 +50,7 @@ void ExternalSolver::set_integrals(OrbitalVector &Phi, FockBuilder &F){
     KineticOperator K(F.momentum());
     NuclearOperator V = *(F.getNuclearOperator());
     GenericTwoOrbitalsOperator g = *(F.getGenericTwoOrbitalsOperator());
+    g.setup(std::make_shared<OrbitalVector>(Phi), 1e-3); // dummy
     // set the one- and two-body integrals
     ExternalSolver::set_one_body_integrals(Phi, K, V);
     ExternalSolver::set_two_body_integrals(Phi, g);
@@ -73,7 +74,7 @@ void ExternalSolver::set_two_body_integrals(OrbitalVector &Phi,  GenericTwoOrbit
     // TODO: use 8-fold symmetry
     for (int j = 0; j < n_orb; j++) {
         for (int l = 0; l < n_orb; l++) {
-            g.setup(j,l,this->prec);
+            g.set_pair(j,l);
             for (int k = 0; k < n_orb; k++) {
                 // calculate |g_jl|Phi_k>
                 //Orbital tmp_k = Phi[k].paramCopy();
