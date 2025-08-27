@@ -38,6 +38,8 @@ public:
     ~ChemTensorSolver() override = default;
 
     void optimize() override;
+
+private:
     void calculate_rdms() override;
 
 };

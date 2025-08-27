@@ -52,7 +52,6 @@ public:
     std::shared_ptr<ComplexTensorR4> get_two_rdm(){return this->two_rdm;}
 
     virtual void optimize() = 0;
-    virtual void calculate_rdms() = 0;
 
 protected:
     double prec=1e-3;
@@ -66,7 +65,7 @@ protected:
     void set_one_body_integrals(OrbitalVector &Phi, KineticOperator &K, NuclearOperator &V);
     void set_two_body_integrals(OrbitalVector &Phi, GenericTwoOrbitalsOperator &g);
 
-    
+    virtual void calculate_rdms() = 0;
 };
 
 } // namespace mrchem

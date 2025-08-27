@@ -32,6 +32,7 @@ namespace mrchem {
 
 void ChemTensorSolver::optimize(){
     this->energy = 1.0; // dummy
+    calculate_rdms();
 }
 
 void ChemTensorSolver::calculate_rdms(){
