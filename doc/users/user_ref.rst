@@ -878,6 +878,60 @@ User input reference
   
     **Default** ``user['SCF']['localize']``
   
+ :Lagrangian: Includes parameters related to the Lagrangian optimization. 
+
+  :red:`Keywords`
+   :run: In which Cartesian directions to run response solver. 
+  
+    **Type** ``List[bool]``
+  
+    **Default** ``[True, True, True]``
+  
+   :max_iter: Maximum number of orbitals' optimization iterations. 
+  
+    **Type** ``int``
+  
+    **Default** ``30``
+  
+   :external_solver: External library used to perform CI calculation.
+  
+    **Type** ``str``
+  
+    **Default** ``chemtensor``
+  
+    **Predicates**
+      - ``value.lower() in ['chemtensor']``
+  
+   :write_checkpoint: Write orbitals to disk in each iteration, file name ``<path_checkpoint>/<X/Y>_rsp_<direction>_idx_<0..N>``.  
+  
+    **Type** ``bool``
+  
+    **Default** ``False``
+  
+   :path_checkpoint: Path to checkpoint files during SCF, used with ``write_checkpoint`` and ``chk`` guess. 
+  
+    **Type** ``str``
+  
+    **Default** ``checkpoint``
+  
+    **Predicates**
+      - ``value[-1] != '/'``
+  
+   :write_orbitals: Write final perturbed orbitals to disk, file name ``<path_orbitals>/<X/Y>_<p/a/b>_rsp_<direction>_idx_<0..Np/Na/Nb>``. 
+  
+    **Type** ``bool``
+  
+    **Default** ``False``
+  
+   :path_orbitals: Path to where converged orbitals will be written in connection with the ``write_orbitals`` keyword. 
+  
+    **Type** ``str``
+  
+    **Default** ``orbitals``
+  
+    **Predicates**
+      - ``value[-1] != '/'``
+  
  :PCM: Includes parameters related to the computation of the reaction field energy of a system in an environment within the Polarizable Continuum Model. 
 
   :red:`Sections`
