@@ -861,7 +861,10 @@ sections:
       Includes parameters related to the Lagrangian optimization.
     keywords:
       - name: run
-        type: void
+        type: bool
+        default: true
+        docstring: |
+          Run Lagrangian solver. Dummy boolean
       - name: max_iter
         type: int
         default: 30

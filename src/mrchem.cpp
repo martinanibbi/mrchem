@@ -72,7 +72,8 @@ int main(int argc, char **argv) {
     if (geopt_inp["run"]) {
         json_out = optimize_positions(scf_inp, mol_inp, geopt_inp, json_inp["printer"]["file_name"]);
         mrcpp::mpi::barrier(mrcpp::mpi::comm_wrk);
-    }else if (lag_inp["run"]) {
+    
+    }else if(json_inp.contains("lag_calculations") && json_inp["lag_calculations"].value("run", false)) {
         Molecule mol;
         driver::init_molecule(mol_inp, mol);
         auto lag_out = driver::lag::run(lag_inp, mol);

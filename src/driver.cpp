@@ -1347,8 +1347,7 @@ void driver::build_fock_operator(const json &json_fock, Molecule &mol, FockBuild
     ///////////   Generic Two Orbitals Operator   /////////////
     ///////////////////////////////////////////////////////////
     if (json_fock.contains("generic_two_orbitals_operator")) {
-        //auto poisson_prec = json_fock["generic_two_orbitals_operator"]["poisson_prec"];
-        double poisson_prec = 1e-3;
+        auto poisson_prec = json_fock["generic_two_orbitals_operator"]["prec"];
         auto P_p = std::make_shared<PoissonOperator>(*MRA, poisson_prec);
         auto g = std::make_shared<GenericTwoOrbitalsOperator>(P_p);
         F.getGenericTwoOrbitalsOperator() = g;

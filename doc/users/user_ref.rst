@@ -881,11 +881,11 @@ User input reference
  :Lagrangian: Includes parameters related to the Lagrangian optimization. 
 
   :red:`Keywords`
-   :run: In which Cartesian directions to run response solver. 
+   :run: Run Lagrangian solver. Dummy boolean 
   
-    **Type** ``List[bool]``
+    **Type** ``bool``
   
-    **Default** ``[True, True, True]``
+    **Default** ``True``
   
    :max_iter: Maximum number of orbitals' optimization iterations. 
   
