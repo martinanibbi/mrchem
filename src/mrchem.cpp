@@ -69,11 +69,15 @@ int main(int argc, char **argv) {
     Timer timer;
     json json_out;
 
+    //std::cout << std:: endl << std::endl << "H E L L O W O R L D!!!" << std::endl << std::endl << std::endl;
+    //std::cout << lag_inp << std::endl;
+    //std::exit(0);
+
     if (geopt_inp["run"]) {
         json_out = optimize_positions(scf_inp, mol_inp, geopt_inp, json_inp["printer"]["file_name"]);
         mrcpp::mpi::barrier(mrcpp::mpi::comm_wrk);
     
-    }else if(json_inp.contains("lag_calculations") && json_inp["lag_calculations"].value("run", false)) {
+    }else if(lag_inp.contains("lag_solver")) {
         Molecule mol;
         driver::init_molecule(mol_inp, mol);
         auto lag_out = driver::lag::run(lag_inp, mol);

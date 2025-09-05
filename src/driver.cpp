@@ -905,7 +905,7 @@ json driver::lag::run(const json &json_lag, Molecule &mol) {
     print_utils::headline(0, "Computing Lagrangian SCF orbitals optimization");
     json json_out = {{"success", true}};
 
-    if (json_lag.contains("properties")) driver::init_properties(json_lag["properties"], mol);
+    //if (json_lag.contains("properties")) driver::init_properties(json_lag["properties"], mol);
 
     ///////////////////////////////////////////////////////////
     ////////////////   Building Fock Operator   ///////////////
@@ -925,6 +925,7 @@ json driver::lag::run(const json &json_lag, Molecule &mol) {
     LagrangianSolver solver;
 
     json_out["lag_solver"] = solver.optimize(mol, F, dmrg_solver);
+    std::cout << "optimization: done" << std::endl;
 
 
 
