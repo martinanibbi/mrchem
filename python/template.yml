@@ -862,7 +862,7 @@ sections:
     keywords:
       - name: run
         type: bool
-        default: true
+        default: false
         docstring: |
           Run Lagrangian solver. Dummy boolean
       - name: max_iter

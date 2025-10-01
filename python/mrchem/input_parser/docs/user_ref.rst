@@ -885,7 +885,7 @@ User input reference
   
     **Type** ``bool``
   
-    **Default** ``True``
+    **Default** ``False``
   
    :max_iter: Maximum number of orbitals' optimization iterations. 
   
