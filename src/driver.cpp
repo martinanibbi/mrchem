@@ -132,6 +132,10 @@ void write_orbitals(const json &input, Molecule &mol, bool dynamic);
 void calc_properties(const json &input, Molecule &mol, int dir, double omega);
 } // namespace rsp
 
+namespace lag{
+bool guess_orbitals(const json &input, Molecule &mol, int norbs);
+} // namespace lag
+
 } // namespace driver
 
 /** @brief Initialize a molecule from input
@@ -907,6 +911,16 @@ json driver::lag::run(const json &json_lag, Molecule &mol) {
 
     // TODO: check if lag_solver is in input json??
     
+    int norbs = json_lag["n_orbitals"];
+    std::cout << "number of orbitals: " << norbs << std::endl;
+    if (norbs < 1) {
+        MSG_ERROR("Invalid number of orbitals");
+        json_out["success"] = false;
+        return json_out;
+    }
+
+    
+
     //if (json_lag.contains("properties")) driver::init_properties(json_lag["properties"], mol);
 
     ///////////////////////////////////////////////////////////
@@ -917,6 +931,19 @@ json driver::lag::run(const json &json_lag, Molecule &mol) {
     driver::build_fock_operator(json_fock, mol, F, 0);
 
     ///////////////////////////////////////////////////////////
+    ///////////////   Setting Up Initial Guess   //////////////
+    ///////////////////////////////////////////////////////////
+    print_utils::headline(0, "Computing Initial Guess Wavefunction");
+    const auto &json_guess = json_lag["initial_guess"];
+    if (lag::guess_orbitals(json_guess, mol, norbs)) {
+        //lag::guess_energy(json_guess, mol, F);
+        //json_out["initial_energy"] = mol.getSCFEnergy().json();
+    } else {
+        json_out["success"] = false;
+        return json_out;
+    }
+
+    ///////////////////////////////////////////////////////////
     /////////////////   Building DMRG Driver   ////////////////
     ///////////////////////////////////////////////////////////
     ChemTensorSolver dmrg_solver;
@@ -925,7 +952,7 @@ json driver::lag::run(const json &json_lag, Molecule &mol) {
     //////////////   Building Lagrangian Solver   /////////////
     ///////////////////////////////////////////////////////////
     LagrangianSolver solver;
-
+    std::cout << "all good before optimization" << std::endl;
     json_out["lag_solver"] = solver.optimize(mol, F, dmrg_solver);
     std::cout << "optimization: done" << std::endl;
 
@@ -944,8 +971,8 @@ json driver::lag::run(const json &json_lag, Molecule &mol) {
  *
  * This function expects the "initial_guess" subsection of the input.
  */
-/*
-bool driver::lag::guess_orbitals(const json &json_guess, Molecule &mol, int norbs) {
+
+bool driver::lag::guess_orbitals(const json &json_guess, Molecule &mol, int norbs) {    
     auto prec = json_guess["prec"];
     auto zeta = json_guess["zeta"];
     auto type = json_guess["type"];
@@ -986,15 +1013,15 @@ bool driver::lag::guess_orbitals(const json &json_guess, Molecule &mol, int norb
     // Fill orbital vector
     auto &nucs = mol.getNuclei();
     auto &Phi = mol.getOrbitals();
-    for (auto p = 0; p < Np; p++) Phi.push_back(Orbital(SPIN::Paired));
-    for (auto a = 0; a < Na; a++) Phi.push_back(Orbital(SPIN::Alpha));
-    for (auto b = 0; b < Nb; b++) Phi.push_back(Orbital(SPIN::Beta));
+    for (auto p = 0; p < norbs; p++) Phi.push_back(Orbital(SPIN::Paired));
+    //for (auto a = 0; a < Na; a++) Phi.push_back(Orbital(SPIN::Alpha));
+    //for (auto b = 0; b < Nb; b++) Phi.push_back(Orbital(SPIN::Beta));
     Phi.distribute();
 
     auto success = true;
     // only gtos supported by now
     success = initial_guess::gto::setup(Phi, prec, screen, gto_bas, gto_p, gto_a, gto_b);
-    
+
     for (const auto &phi_i : Phi) {
         double err = (mrcpp::mpi::my_orb(phi_i)) ? std::abs(phi_i.norm() - 1.0) : 0.0;
         if (err > 0.01) MSG_WARN("MO not normalized!");
@@ -1003,7 +1030,7 @@ bool driver::lag::guess_orbitals(const json &json_guess, Molecule &mol, int norb
     orbital::print(Phi);
     return success;
 }
-*/
+
 
 
 /** @brief Run initial guess calculation for the response orbitals

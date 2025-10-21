@@ -865,6 +865,11 @@ sections:
         default: false
         docstring: |
           Run Lagrangian solver. Dummy boolean
+      - name: n_orbitals
+        type: int
+        default: 0
+        docstring: |
+          Total number of orbitals.
       - name: max_iter
         type: int
         default: 30

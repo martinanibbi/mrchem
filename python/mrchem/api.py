@@ -175,11 +175,11 @@ def write_scf_calculation(user_dict, origin):
 
 
 def write_lag_calculations(user_dict):
-    #wf_dict = parse_wf_method(user_dict)
+    wf_dict = parse_wf_method(user_dict)
 
     lag_dict = {}
     lag_dict["fock_operator"] = write_lag_fock(user_dict)
-    #lag_dict["initial_guess"] = write_scf_guess(user_dict, wf_dict)
+    lag_dict["initial_guess"] = write_scf_guess(user_dict, wf_dict)
 
     path_orbitals = user_dict["Lagrangian"]["path_orbitals"]
     if user_dict["Lagrangian"]["write_orbitals"]:
@@ -192,6 +192,8 @@ def write_lag_calculations(user_dict):
     if user_dict["Lagrangian"]["run"]:
         lag_dict["lag_solver"] = write_lag_solver(user_dict)
 
+    lag_dict["n_orbitals"] = user_dict["Lagrangian"]["n_orbitals"]
+    
     #prop_dict = write_scf_properties(user_dict, origin)
     #if len(prop_dict) > 0:
     #    lag_dict["properties"] = prop_dict

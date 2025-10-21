@@ -887,6 +887,12 @@ User input reference
   
     **Default** ``False``
   
+   :n_orbitals: Total number of orbitals. 
+  
+    **Type** ``int``
+  
+    **Default** ``0``
+  
    :max_iter: Maximum number of orbitals' optimization iterations. 
   
     **Type** ``int``
