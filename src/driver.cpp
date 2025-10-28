@@ -919,8 +919,6 @@ json driver::lag::run(const json &json_lag, Molecule &mol) {
         return json_out;
     }
 
-    
-
     //if (json_lag.contains("properties")) driver::init_properties(json_lag["properties"], mol);
 
     ///////////////////////////////////////////////////////////
@@ -947,16 +945,13 @@ json driver::lag::run(const json &json_lag, Molecule &mol) {
     /////////////////   Building DMRG Driver   ////////////////
     ///////////////////////////////////////////////////////////
     ChemTensorSolver dmrg_solver;
-
     ///////////////////////////////////////////////////////////
     //////////////   Building Lagrangian Solver   /////////////
     ///////////////////////////////////////////////////////////
     LagrangianSolver solver;
-    std::cout << "all good before optimization" << std::endl;
+
     json_out["lag_solver"] = solver.optimize(mol, F, dmrg_solver);
     std::cout << "optimization: done" << std::endl;
-
-
 
     return json_out;
 }
@@ -1452,6 +1447,7 @@ void driver::build_fock_operator(const json &json_fock, Molecule &mol, FockBuild
         auto g = std::make_shared<GenericTwoOrbitalsOperator>(P_p);
         F.getGenericTwoOrbitalsOperator() = g;
     }
+
     
     F.build(exx);
 }

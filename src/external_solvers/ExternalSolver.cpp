@@ -54,6 +54,7 @@ void ExternalSolver::set_integrals(OrbitalVector &Phi, FockBuilder &F){
     // set the one- and two-body integrals
     ExternalSolver::set_one_body_integrals(Phi, K, V);
     ExternalSolver::set_two_body_integrals(Phi, g);
+
 }
 
 
@@ -62,15 +63,15 @@ void ExternalSolver::set_integrals(OrbitalVector &Phi, FockBuilder &F){
 void ExternalSolver::set_one_body_integrals(OrbitalVector &Phi, KineticOperator &K, NuclearOperator &V){
     OrbitalVector KPhi = K(Phi);
     OrbitalVector VPhi = V(Phi);
-    *(this->one_body_integrals) = orbital::calc_overlap_matrix(Phi, KPhi)
-                                + orbital::calc_overlap_matrix(Phi, VPhi);
+    this->one_body_integrals = std::make_shared<ComplexMatrix>(orbital::calc_overlap_matrix(Phi, KPhi)
+                                                             + orbital::calc_overlap_matrix(Phi, VPhi));
 }
 
 void ExternalSolver::set_two_body_integrals(OrbitalVector &Phi,  GenericTwoOrbitalsOperator &g){
     int n_orb = Phi.size();
-    *(this->two_body_integrals) = ComplexTensorR4(n_orb, n_orb, n_orb, n_orb);
+    this->two_body_integrals = std::make_shared<ComplexTensorR4>(n_orb, n_orb, n_orb, n_orb);
     this->two_body_integrals->setZero();
-
+    std::cout << "two body integral size: " << this->two_body_integrals->dimensions() << std::endl;
     // TODO: use 8-fold symmetry
     for (int j = 0; j < n_orb; j++) {
         for (int l = 0; l < n_orb; l++) {
