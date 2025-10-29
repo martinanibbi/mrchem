@@ -23,26 +23,22 @@
  * <https://mrchem.readthedocs.io/>
  */
 
-#include <nlohmann/json.hpp>
+
+#include "ChemTensorSolver.h"
+
 
 namespace mrchem {
 
-class Molecule;
-class CUBEfunction;
-namespace driver {
 
-void init_molecule(const nlohmann::json &input, Molecule &mol);
-nlohmann::json print_properties(const Molecule &mol);
-std::vector<mrchem::CUBEfunction> getCUBEFunction(const nlohmann::json &json_inp);
+void ChemTensorSolver::optimize(){
+    this->energy = 1.0; // dummy
+    calculate_rdms();
+}
 
-namespace scf {
-nlohmann::json run(const nlohmann::json &input, Molecule &mol);
+void ChemTensorSolver::calculate_rdms(){
+    *(this->one_rdm) = *(this->one_body_integrals);
+    *(this->two_rdm) = *(this->two_body_integrals);
+    // dummy (dimensions are the same)
 }
-namespace rsp {
-nlohmann::json run(const nlohmann::json &input, Molecule &mol);
-}
-namespace lag{
-nlohmann::json run(const nlohmann::json &input, Molecule &mol);
-}
-} // namespace driver
+
 } // namespace mrchem
