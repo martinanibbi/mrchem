@@ -84,7 +84,7 @@ void ExternalSolver::set_two_body_integrals(OrbitalVector &Phi,  GenericTwoOrbit
                 for (int i = 0; i < n_orb; i++) {
                     // calculate (ij|kl) = <Phi_i|V_jl|Phi_k>
                     // BUG: add factor 4pi??
-                    (*this->two_body_integrals)(i,j,k,l) = orbital::dot(Phi[i], tmp_k);
+                    (*this->two_body_integrals)(i,j,k,l) = mrcpp::dot(Phi[i], tmp_k);
                 }
             }
         }

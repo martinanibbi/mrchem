@@ -1022,9 +1022,9 @@ bool driver::lag::guess_orbitals(const json &json_guess, Molecule &mol, int norb
     auto success = true;
     // only gtos supported by now
     success = initial_guess::gto::setup(Phi, prec, screen, gto_bas, gto_p, gto_a, gto_b);
-
+    
     for (const auto &phi_i : Phi) {
-        double err = (mrcpp::mpi::my_orb(phi_i)) ? std::abs(phi_i.norm() - 1.0) : 0.0;
+        double err = (mrcpp::mpi::my_func(phi_i)) ? std::abs(phi_i.norm() - 1.0) : 0.0;
         if (err > 0.01) MSG_WARN("MO not normalized!");
     }
 

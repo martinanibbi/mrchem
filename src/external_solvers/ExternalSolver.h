@@ -54,7 +54,8 @@ public:
     virtual void optimize() = 0;
 
 protected:
-    //double prec=1e-3;
+    // Dummy default precision
+    double prec=1e-3;
     double energy{};
 
     std::shared_ptr<ComplexMatrix> one_body_integrals{};

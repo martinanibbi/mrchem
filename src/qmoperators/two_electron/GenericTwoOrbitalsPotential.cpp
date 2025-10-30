@@ -56,7 +56,8 @@ Orbital GenericTwoOrbitalsPotential::calculate_g_jl(){
     OrbitalVector Phi = *(this->orbitals);
     // calculate rho_jl = Phi_j^+ Phi_l
     Orbital rho_jl = Phi[this->j].paramCopy();
-    mrcpp::cplxfunc::multiply(rho_jl, Phi[this->j].dagger(), Phi[this->l], this->prec, true, true);
+    // phi_j^\dagger * \phi_l
+    mrcpp::multiply(rho_jl, Phi[this->j], Phi[this->l], this->prec, true, true);
     // calculate g_jl = P(rho_jl)
     Orbital g_jl = rho_jl.paramCopy();
     if (rho_jl.hasReal()) {
@@ -67,7 +68,7 @@ Orbital GenericTwoOrbitalsPotential::calculate_g_jl(){
         g_jl.alloc(NUMBER::Imag);
         mrcpp::apply(this->prec, g_jl.imag(), *(this->poisson), rho_jl.imag());
     }
-    rho_jl.release();
+    rho_jl.free();
     return g_jl;
 }
 
@@ -75,7 +76,7 @@ Orbital GenericTwoOrbitalsPotential::calculate_g_jl(){
 Orbital GenericTwoOrbitalsPotential::apply(Orbital inp){
     if (this->g_jl == nullptr) throw std::runtime_error("GenericTwoOrbitalsPotential::apply: pair orbitals not set");
     Orbital out = inp.paramCopy();
-    mrcpp::cplxfunc::multiply(out, *(this->g_jl), inp, this->prec, true, true);
+    mrcpp::multiply(out, *(this->g_jl), inp, this->prec, true, true);
     return out;
 }
 
