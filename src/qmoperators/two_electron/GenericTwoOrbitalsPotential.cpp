@@ -49,10 +49,10 @@ void GenericTwoOrbitalsPotential::set_pair(int j, int l){
     // set new pair
     this->j = j;
     this->l = l;
-    this->g_jl = std::make_shared<Orbital>(this->calculate_g_jl());
+    set_g_jl();
 }
 
-Orbital GenericTwoOrbitalsPotential::calculate_g_jl(){
+void GenericTwoOrbitalsPotential::set_g_jl(){
     OrbitalVector Phi = *(this->orbitals);
     // calculate rho_jl = Phi_j^+ Phi_l
     Orbital rho_jl = Phi[this->j].paramCopy();
@@ -69,7 +69,7 @@ Orbital GenericTwoOrbitalsPotential::calculate_g_jl(){
         mrcpp::apply(this->prec, g_jl.imag(), *(this->poisson), rho_jl.imag());
     }
     rho_jl.free();
-    return g_jl;
+    this->g_jl = std::make_shared<Orbital>(g_jl);
 }
 
 

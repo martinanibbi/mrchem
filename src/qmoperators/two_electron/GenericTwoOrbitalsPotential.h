@@ -33,7 +33,7 @@ namespace mrchem {
 class GenericTwoOrbitalsPotential : public QMPotential {
 public:
     explicit GenericTwoOrbitalsPotential(std::shared_ptr<mrcpp::PoissonOperator> P, std::shared_ptr<OrbitalVector> Phi = nullptr, bool mpi_share = false);
-    ~GenericTwoOrbitalsPotential() override = default;
+    ~GenericTwoOrbitalsPotential() override = default; //TODO: explicitly clear? clear it from FockBuilder?
 
     void setup(std::shared_ptr<OrbitalVector> Phi, double prec);
     void set_pair(int j, int l);
@@ -55,7 +55,7 @@ protected:
     //void setup(double prec) override;
     //void clear() override;
 
-    Orbital calculate_g_jl();
+    void set_g_jl();
 };
 
 } // namespace mrchem

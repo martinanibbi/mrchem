@@ -79,8 +79,10 @@ json LagrangianSolver::optimize(Molecule &mol, FockBuilder &F, ChemTensorSolver 
 
     int nIter = 0;
     bool converged = false;
-    // cycle
-
+    
+    // end
+    F.clear();
+    json_out["converged"] = converged;
     return json_out;
 
 }

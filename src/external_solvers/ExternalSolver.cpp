@@ -45,12 +45,15 @@ class FockBuilder;
  * 
  */
 
+ // TODO: more efficient without defining new operators?
 void ExternalSolver::set_integrals(OrbitalVector &Phi, FockBuilder &F){
+    F.setup(this->prec);
     // operators
     KineticOperator K(F.momentum());
     NuclearOperator V = *(F.getNuclearOperator());
     GenericTwoOrbitalsOperator g = *(F.getGenericTwoOrbitalsOperator());
-    g.setup(std::make_shared<OrbitalVector>(Phi), 1e-3); // dummy
+
+    g.setup(std::make_shared<OrbitalVector>(Phi), this->prec); 
     // set the one- and two-body integrals
     ExternalSolver::set_one_body_integrals(Phi, K, V);
     ExternalSolver::set_two_body_integrals(Phi, g);
