@@ -145,6 +145,8 @@ void LagrangianSolver::orbital_update(FockBuilder &F, ChemTensorSolver &S){
     // (two-body integral and rdms not necessary)
     S.diagonalize_1rdm();
     std::shared_ptr<ComplexMatrix> basis_change = S.get_basis_change();
+    // keep the old orbitals: the two-body term uses them together with the old-basis two-body rdm
+    OrbitalVector old_Phi = *this->orbitals;
     orbital_basis_change(basis_change);
 
     // initialize Helmholtz operator
@@ -156,7 +158,7 @@ void LagrangianSolver::orbital_update(FockBuilder &F, ChemTensorSolver &S){
     OrbitalVector new_Phi(L);
 
     orbital_update_one_body(F, S, new_Phi);
-    orbital_update_two_body(F, S, new_Phi);
+    orbital_update_two_body(F, S, old_Phi, new_Phi);
     
     // apply Helmholtz kernel and update orbitals
     (*this->orbitals) = H(new_Phi);
@@ -209,7 +211,7 @@ void LagrangianSolver::orbital_update_one_body(FockBuilder &F, ChemTensorSolver 
     }
 }
 
-void LagrangianSolver::orbital_update_two_body(FockBuilder &F, ChemTensorSolver &S, OrbitalVector &new_Phi){
+void LagrangianSolver::orbital_update_two_body(FockBuilder &F, ChemTensorSolver &S, OrbitalVector &old_Phi, OrbitalVector &new_Phi){
     const int L = this->orbitals->size();
     auto &one_rdm = *(S.get_one_rdm());
     auto &two_rdm = *(S.get_two_rdm());
@@ -227,20 +229,20 @@ void LagrangianSolver::orbital_update_two_body(FockBuilder &F, ChemTensorSolver 
                     for (int l = 0; l < L; l++)
                         U_dE2(m, j, k, l) += basis_change(m, i) * two_rdm(i, j, k, l);
 
-    // two-body term
+    // two-body term: m on the new basis (through U_dE2), j, k, l on the old basis (like two_rdm)
     for (int j = 0; j < L; j++) {
         std::cout << "Orbital " << j+1 << " out of " << L << std::endl;
         for (int l = 0; l < L; l++) {
             // g_jl = 4*pi * poisson(Phi[j] * Phi[l])
             // TODO: probably BUG here!
             Orbital phi_jl, g_jl;
-            mrcpp::multiply(phi_jl, (*this->orbitals)[j], (*this->orbitals)[l], this->prec);
+            mrcpp::multiply(phi_jl, old_Phi[j], old_Phi[l], this->prec);
             mrcpp::apply(this->prec, g_jl, P, phi_jl);
 
             for (int k = 0; k < L; k++) {
                 // state = g_jl * Phi[k]
                 Orbital state;
-                mrcpp::multiply(state, g_jl, (*this->orbitals)[k], this->prec);
+                mrcpp::multiply(state, g_jl, old_Phi[k], this->prec);
 
                 for (int m = 0; m < L; m++) {
                     ComplexDouble denom;

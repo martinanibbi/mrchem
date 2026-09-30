@@ -75,7 +75,7 @@ protected:
     void orbital_update(FockBuilder &F, ChemTensorSolver &S);
     void orbital_basis_change(std::shared_ptr<ComplexMatrix> basis_change);
     void orbital_update_one_body(FockBuilder &F, ChemTensorSolver &S, OrbitalVector &new_Phi);
-    void orbital_update_two_body(FockBuilder &F, ChemTensorSolver &S, OrbitalVector &new_Phi);
+    void orbital_update_two_body(FockBuilder &F, ChemTensorSolver &S, OrbitalVector &old_Phi, OrbitalVector &new_Phi);
 };
 
 } // namespace mrchem
