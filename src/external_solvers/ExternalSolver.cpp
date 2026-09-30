@@ -83,16 +83,16 @@ void ExternalSolver::calculate_lagrange_multipliers(){
     const int L = this->one_body_integrals->rows();
     ComplexMatrix lag_coeff = ComplexMatrix::Zero(L, L);
 
-    // one-body contributions
+    // one-body contributions: sum_j one_rdm(n, j) * h(m, j)
     lag_coeff += (*this->one_rdm) * (*this->one_body_integrals).transpose();
 
-    // two-body contributions
+    // two-body contributions: 2 * sum_jkl two_rdm(n, j, k, l) * g(m, j, k, l)
     for (int n = 0; n < L; n++)
         for (int m = 0; m < L; m++)
             for (int j = 0; j < L; j++)
                 for (int k = 0; k < L; k++)
                     for (int l = 0; l < L; l++)
-                        lag_coeff(n, m) += 2.0 * (*this->two_rdm)(m, j, k, l) * (*this->two_body_integrals)(n, j, k, l);
+                        lag_coeff(n, m) += 2.0 * (*this->two_rdm)(n, j, k, l) * (*this->two_body_integrals)(m, j, k, l);
     
     this->lag_coeff = std::make_shared<ComplexMatrix>(lag_coeff);
 }
@@ -133,10 +133,36 @@ void ExternalSolver::calculate_helmholtz_coefficients() {
     const int L = this->one_body_integrals->rows();
 
     DoubleVector result(L);
+    auto &U = *this->basis_change;
+    auto &two_rdm = *this->two_rdm;
+    auto &two_body_int = *this->two_body_integrals;
+
+    // lag_coeff'(m,m)/one_rdm'(m,m) is unstable for small occupations: as in python, use
+    // h'(m,m) + correction(m)/one_rdm'(m,m), with the two-body part of lag_coeff'(m,m)
+    // correction(m) = 2 * sum_{a,b,jkl} U(m,a) * two_rdm(a,j,k,l) * g(b,j,k,l) * conj(U(m,b))
+    // (one_body_integrals is already in the new basis, two_rdm and g are in the old one)
+    ComplexTensorR4 U_dE2(L, L, L, L);  // sum_a U(m,a) * two_rdm(a,j,k,l)
+    ComplexTensorR4 U_g(L, L, L, L);    // sum_b conj(U(m,b)) * g(b,j,k,l)
+    U_dE2.setZero();
+    U_g.setZero();
+    for (int m = 0; m < L; m++)
+        for (int a = 0; a < L; a++)
+            for (int j = 0; j < L; j++)
+                for (int k = 0; k < L; k++)
+                    for (int l = 0; l < L; l++) {
+                        U_dE2(m, j, k, l) += U(m, a) * two_rdm(a, j, k, l);
+                        U_g(m, j, k, l) += std::conj(U(m, a)) * two_body_int(a, j, k, l);
+                    }
+
     for (int m = 0; m < L; m++) {
         if (std::abs((*this->one_rdm)(m, m)) < 1e-10)
             MSG_ABORT("Division by zero in helmholtz_coefficients: occupation number too small");
-        result[m] = ((*this->lag_coeff)(m, m) / (*this->one_rdm)(m, m)).real();
+        ComplexDouble correction = 0.0;
+        for (int j = 0; j < L; j++)
+            for (int k = 0; k < L; k++)
+                for (int l = 0; l < L; l++)
+                    correction += 2.0 * U_dE2(m, j, k, l) * U_g(m, j, k, l);
+        result[m] = ((*this->one_body_integrals)(m, m) + correction / (*this->one_rdm)(m, m)).real();
     }
 
     this->helm_coeff = std::make_shared<DoubleVector>(result);

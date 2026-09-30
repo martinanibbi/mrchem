@@ -105,7 +105,6 @@ json LagrangianSolver::optimize(Molecule &mol, FockBuilder &F, ChemTensorSolver 
     // and the in-place add in the orbital update needs orbitals and coefficients of the same type
     // TODO: distinguish between real and complex cases (real orbitals are cheaper)
     make_uniform_type(*this->orbitals, true);
-    double prec = 1e-3;
 
     bool converged = false;
     
@@ -118,7 +117,7 @@ json LagrangianSolver::optimize(Molecule &mol, FockBuilder &F, ChemTensorSolver 
 
         // check if converged (before the update, so that orbitals and last energy match)
         if(i>0){
-            if(abs(this->energy[i-1]-this->energy[i])<this->scf_tol){
+            if(std::abs(this->energy[i-1]-this->energy[i])<this->scf_tol){
                 converged=true;
                 break;
             }
@@ -161,6 +160,16 @@ void LagrangianSolver::orbital_update(FockBuilder &F, ChemTensorSolver &S){
     // initialize Helmholtz operator
     S.calculate_helmholtz_coefficients();
     std::shared_ptr<DoubleVector> ptr_helm_coeff = S.get_helmholtz_coefficients();
+    // as in python: positive coefficients (mu imaginary) are not allowed. The check is done here,
+    // since HelmholtzVector silently replaces them with -0.5 (needed by the standard SCF solver)
+    for (int m = 0; m < L; m++) {
+        double x_m = (*ptr_helm_coeff)(m);
+        if (x_m > this->threshold) {
+            std::stringstream msg;
+            msg << "Positive Helmholtz coefficient for orbital " << m << ": " << x_m;
+            MSG_ABORT(msg.str());
+        }
+    }
     HelmholtzVector H(this->prec, *ptr_helm_coeff);
     
     // new orbitals
@@ -244,10 +253,9 @@ void LagrangianSolver::orbital_update_two_body(FockBuilder &F, ChemTensorSolver 
     for (int j = 0; j < L; j++) {
         std::cout << "Orbital " << j+1 << " out of " << L << std::endl;
         for (int l = 0; l < L; l++) {
-            // g_jl = 4*pi * poisson(Phi[j] * Phi[l])
-            // TODO: probably BUG here!
+            // g_jl = poisson(Phi[j]^* * Phi[l]) (the MRCPP kernel is already 1/|r-r'|, no 4*pi as in python)
             Orbital phi_jl, g_jl;
-            mrcpp::multiply(phi_jl, old_Phi[j], old_Phi[l], this->prec);
+            mrcpp::multiply(phi_jl, old_Phi[j], old_Phi[l], this->prec, false, false, true);
             mrcpp::apply(this->prec, g_jl, P, phi_jl);
 
             for (int k = 0; k < L; k++) {
