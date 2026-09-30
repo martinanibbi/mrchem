@@ -47,6 +47,27 @@ extern mrcpp::MultiResolutionAnalysis<3> *mrchem::MRA;
 
 namespace mrchem {
 
+namespace {
+/** @brief Convert all orbitals to complex if at least one of them is complex
+ *
+ * Complex coefficients in the orbital update can turn some orbitals complex and
+ * leave others real, while MRCPP routines (e.g. rotate) expect a uniform type.
+ */
+void make_uniform_type(OrbitalVector &Phi) {
+    bool any_complex = false;
+    for (auto &phi : Phi)
+        if (phi.iscomplex()) any_complex = true;
+    if (!any_complex) return;
+
+    for (auto &phi : Phi) {
+        if (phi.iscomplex()) continue;
+        Orbital phi_c;
+        mrcpp::CopyToComplex(phi_c, phi);
+        phi = phi_c;
+    }
+}
+} // namespace
+
 // TODO: read all the settings in input
 LagrangianSolver::LagrangianSolver(){
     this->nIter = 10;
@@ -93,6 +114,11 @@ json LagrangianSolver::optimize(Molecule &mol, FockBuilder &F, ChemTensorSolver 
 
         // update orbitals
         orbital_update(F, S);
+        make_uniform_type(*this->orbitals);
+
+        // reinforce orthonormalization immediately (Loewdin: Phi = S^(-1/2) Phi)
+        ComplexMatrix S_m12 = orbital::calc_lowdin_matrix(*this->orbitals);
+        mrcpp::rotate(*this->orbitals, S_m12, this->prec);
 
         // check if converged
         if(i>0){
