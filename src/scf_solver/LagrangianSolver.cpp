@@ -141,8 +141,10 @@ void LagrangianSolver::orbital_basis_change(std::shared_ptr<ComplexMatrix> basis
     OrbitalVector new_Phi;
 
     for (int i = 0; i < L; i++) {
-        std::vector<ComplexDouble> coeffs(basis_change->row(i).data(), 
-                                          basis_change->row(i).data() + L);
+        // phi_i = sum_j U(i,j) * Phi[j]
+        std::vector<ComplexDouble> coeffs(L);
+        for (int j = 0; j < L; j++)
+            coeffs[j] = (*basis_change)(i, j);
         Orbital phi_i;
         mrcpp::linear_combination(phi_i, coeffs, *this->orbitals, this->prec);
         new_Phi.push_back(phi_i);
