@@ -48,13 +48,13 @@ extern mrcpp::MultiResolutionAnalysis<3> *mrchem::MRA;
 namespace mrchem {
 
 namespace {
-/** @brief Convert all orbitals to complex if at least one of them is complex
+/** @brief Convert all orbitals to complex if at least one of them is complex (or if forced)
  *
  * Complex coefficients in the orbital update can turn some orbitals complex and
- * leave others real, while MRCPP routines (e.g. rotate) expect a uniform type.
+ * leave others real, while MRCPP routines (e.g. rotate, in-place add) expect a uniform type.
  */
-void make_uniform_type(OrbitalVector &Phi) {
-    bool any_complex = false;
+void make_uniform_type(OrbitalVector &Phi, bool force_complex = false) {
+    bool any_complex = force_complex;
     for (auto &phi : Phi)
         if (phi.iscomplex()) any_complex = true;
     if (!any_complex) return;
@@ -101,6 +101,10 @@ json LagrangianSolver::optimize(Molecule &mol, FockBuilder &F, ChemTensorSolver 
 
     // initial orbitals
     set_orbitals(mol.getOrbitals());
+    // work with complex orbitals throughout: the RDMs from the external solver are complex,
+    // and the in-place add in the orbital update needs orbitals and coefficients of the same type
+    // TODO: distinguish between real and complex cases (real orbitals are cheaper)
+    make_uniform_type(*this->orbitals, true);
     double prec = 1e-3;
 
     bool converged = false;
@@ -196,13 +200,15 @@ void LagrangianSolver::orbital_update_one_body(FockBuilder &F, ChemTensorSolver 
             for (auto j = 0; j < L; j++) {
                 // multipliers' term (on new basis)
                 if (j != m)
-                    mrcpp::add(new_Phi[m], 1.0, new_Phi[m], -lag_coeff(m, j) / one_rdm(m, m), (*this->orbitals)[j], this->prec);
+                    new_Phi[m].add(-lag_coeff(m, j) / one_rdm(m, m), (*this->orbitals)[j]);
             }
         } else if (std::abs(lag_coeff(m, m)) > this->threshold) {
             std::cerr << "WARNING: lambda_m below threshold, but not helm_coeff'_mm !" << std::endl;
+            // start from zero
+            new_Phi[m] = (*this->orbitals)[m].paramCopy(true);
             for (auto j = 0; j < L; j++) {
                 if (j != m)
-                    mrcpp::add(new_Phi[m], 1.0, new_Phi[m], -lag_coeff(m, j) / lag_coeff(m, m), (*this->orbitals)[j], this->prec);
+                    new_Phi[m].add(-lag_coeff(m, j) / lag_coeff(m, m), (*this->orbitals)[j]);
             }
         } else {
             std::cerr << "WARNING: Both lambda_m and helm_coeff'_mm below threshold" << std::endl;
@@ -215,7 +221,7 @@ void LagrangianSolver::orbital_update_two_body(FockBuilder &F, ChemTensorSolver 
     const int L = this->orbitals->size();
     auto &one_rdm = *(S.get_one_rdm());
     auto &two_rdm = *(S.get_two_rdm());
-    auto &helm_coeff = *(S.get_helmholtz_coefficients());
+    auto &lag_coeff = *(S.get_lagrange_multipliers());
     auto &basis_change = *(S.get_basis_change());
     auto &P = *this->P_p;
 
@@ -248,13 +254,13 @@ void LagrangianSolver::orbital_update_two_body(FockBuilder &F, ChemTensorSolver 
                     ComplexDouble denom;
                     if (std::abs(one_rdm(m, m)) > threshold)
                         denom = one_rdm(m, m);
-                    else if (std::abs(helm_coeff(m, m)) > threshold)
-                        denom = helm_coeff(m, m);
+                    else if (std::abs(lag_coeff(m, m)) > threshold)
+                        denom = lag_coeff(m, m);
                     else
                         continue; // both below threshold, skip
 
                     ComplexDouble coeff = 2.0 * U_dE2(m, j, k, l) / denom;
-                    mrcpp::add(new_Phi[m], 1.0, new_Phi[m], coeff, state, this->prec);
+                    new_Phi[m].add(coeff, state);
                 }
             }
         }
