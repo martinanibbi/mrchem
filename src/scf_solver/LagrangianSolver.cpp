@@ -49,11 +49,11 @@ namespace mrchem {
 
 // TODO: read all the settings in input
 LagrangianSolver::LagrangianSolver(){
-    this->P_p = std::make_shared<PoissonOperator>(*MRA, this->prec);
     this->nIter = 10;
     this->scf_tol = 1e-3;
     this->prec = 1e-3;
     this->threshold = 1e-10;
+    this->P_p = std::make_shared<PoissonOperator>(*MRA, this->prec);
 }
 
 void LagrangianSolver::set_orbitals(OrbitalVector Phi_n){
