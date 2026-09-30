@@ -109,12 +109,23 @@ json LagrangianSolver::optimize(Molecule &mol, FockBuilder &F, ChemTensorSolver 
 
     bool converged = false;
     
-    for(int i=0; i<this->nIter && !converged; i++){
+    for(int i=0; i<this->nIter; i++){
         // set integrals, run DMRG and calculate RDMS
         S.set_integrals(*this->orbitals);
         S.optimize();
         this->energy.push_back(S.get_energy());
         std::cout << "Energy:" << S.get_energy() << std::endl;
+
+        // check if converged (before the update, so that orbitals and last energy match)
+        if(i>0){
+            if(abs(this->energy[i-1]-this->energy[i])<this->scf_tol){
+                converged=true;
+                break;
+            }
+        }
+        // last iteration: no need to update the orbitals
+        if(i == this->nIter-1)
+            break;
 
         // update orbitals
         orbital_update(F, S);
@@ -123,12 +134,6 @@ json LagrangianSolver::optimize(Molecule &mol, FockBuilder &F, ChemTensorSolver 
         // reinforce orthonormalization immediately (Loewdin: Phi = S^(-1/2) Phi)
         ComplexMatrix S_m12 = orbital::calc_lowdin_matrix(*this->orbitals);
         mrcpp::rotate(*this->orbitals, S_m12, this->prec);
-
-        // check if converged
-        if(i>0){
-            if(abs(this->energy[i-1]-this->energy[i])<this->scf_tol)
-                converged=true;
-        }
     }
 
     // end
