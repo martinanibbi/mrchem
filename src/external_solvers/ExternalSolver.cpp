@@ -72,11 +72,16 @@ void ExternalSolver::set_integrals(OrbitalVector &Phi) {
 
 // TODO: change 'NuclearOperator' to 'RankZeroOperator'
 void ExternalSolver::set_one_body_integrals(OrbitalVector &Phi, MomentumOperator &P, NuclearOperator &V) {
-    this->one_body_integrals = std::make_shared<ComplexMatrix>(qmoperator::calc_kinetic_matrix(P, Phi, Phi) + V(Phi, Phi));
+    ComplexMatrix h = qmoperator::calc_kinetic_matrix(P, Phi, Phi) + V(Phi, Phi);
+    // enforce hermiticity (broken at the level of the MW precision)
+    this->one_body_integrals = std::make_shared<ComplexMatrix>(0.5 * (h + h.adjoint()));
 }
 
 void ExternalSolver::set_two_body_integrals(OrbitalVector &Phi) {
-    this->two_body_integrals = std::make_shared<ComplexTensorR4>(calc_2elintegrals(this->prec, Phi));
+    ComplexTensorR4 g = calc_2elintegrals(this->prec, Phi);
+    // enforce v_ijkl = conj(v_klij) (physicist's notation, broken at the level of the MW precision)
+    Eigen::array<int, 4> swap_pairs = {2, 3, 0, 1};
+    this->two_body_integrals = std::make_shared<ComplexTensorR4>(0.5 * (g + g.shuffle(swap_pairs).conjugate()));
 }
 
 void ExternalSolver::calculate_lagrange_multipliers(){
