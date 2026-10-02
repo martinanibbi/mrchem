@@ -80,7 +80,7 @@ private:
     std::vector<double> en_sweeps{};
 
     void set_dense_tensors();
-    void calculate_rdms();
+    void calculate_rdms() override;
 
     
 };

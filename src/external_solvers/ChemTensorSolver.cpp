@@ -137,10 +137,11 @@ void ChemTensorSolver::optimize() {
 	
     // initial state vector as MPS
     // free the MPS of the previous iteration before building a new one
-    if(this->psi)
+    if(this->psi) {
         delete_mps(this->psi);
-    else
+    } else {
         this->psi = new mps{};
+    }
 
 	{
 		rng_state rng;

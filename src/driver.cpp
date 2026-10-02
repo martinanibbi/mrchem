@@ -1190,7 +1190,7 @@ bool driver::lag::guess_orbitals(const json &json_guess, Molecule &mol, int norb
     int Ne = mol.getNElectrons(); // total electrons
     
     // Fill orbital vector
-    auto &nucs = mol.getNuclei();
+    // auto &nucs = mol.getNuclei(); // This is unused
     auto &Phi = mol.getOrbitals();
     // BUG: it allocates automatically 2 electrons per orbital!
     for (auto p = 0; p < norbs; p++) Phi.push_back(Orbital(SPIN::Paired));
