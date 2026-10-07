@@ -62,7 +62,6 @@ public:
 
 protected:
     //std::string chkFile;  ///< Name of checkpoint file
-    int nIter{};
     double scf_tol{};
     double prec{};
     double threshold{};

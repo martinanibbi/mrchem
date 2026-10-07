@@ -70,7 +70,6 @@ void make_uniform_type(OrbitalVector &Phi, bool force_complex = false) {
 
 // TODO: read all the settings in input
 LagrangianSolver::LagrangianSolver(){
-    this->nIter = 10;
     this->scf_tol = 1e-3;
     this->prec = 1e-3;
     this->threshold = 1e-10;
@@ -108,7 +107,7 @@ json LagrangianSolver::optimize(Molecule &mol, FockBuilder &F, ChemTensorSolver 
 
     bool converged = false;
     
-    for(int i=0; i<this->nIter; i++){
+    for(int i=0; i<this->maxIter; i++){
         // set integrals, run DMRG and calculate RDMS
         S.set_integrals(*this->orbitals);
         S.optimize();
@@ -123,7 +122,7 @@ json LagrangianSolver::optimize(Molecule &mol, FockBuilder &F, ChemTensorSolver 
             }
         }
         // last iteration: no need to update the orbitals
-        if(i == this->nIter-1)
+        if(i == this->maxIter-1)
             break;
 
         // update orbitals

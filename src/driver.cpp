@@ -1157,7 +1157,10 @@ json driver::lag::run(const json &json_lag, Molecule &mol) {
     ///////////////////////////////////////////////////////////
     //////////////   Building Lagrangian Solver   /////////////
     ///////////////////////////////////////////////////////////
+    auto max_iter = json_lag["lag_solver"]["max_iter"];
+
     LagrangianSolver solver;
+    solver.setMaxIterations(max_iter);
 
     json_out["lag_solver"] = solver.optimize(mol, F, dmrg_solver);
     std::cout << "optimization: done" << std::endl;
