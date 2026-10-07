@@ -136,14 +136,17 @@ void ChemTensorSolver::optimize() {
 		MSG_ABORT("internal consistency check for Molecular Hamiltonian MPO failed");
 	
     // initial state vector as MPS
-    // free the MPS of the previous iteration before building a new one
-    if(this->psi) {
-        delete_mps(this->psi);
+    // if requested, start from the MPS of the previous iteration (if any), otherwise from a random one
+    if (this->start_from_previous_mps && this->psi) {
+        // nothing to do: dmrg_twosite uses this->psi as initial state
     } else {
-        this->psi = new mps{};
-    }
+        // free the MPS of the previous iteration before building a new one
+        if(this->psi) {
+            delete_mps(this->psi);
+        } else {
+            this->psi = new mps{};
+        }
 
-	{
 		rng_state rng;
 		seed_rng_state(42, &rng);
 
