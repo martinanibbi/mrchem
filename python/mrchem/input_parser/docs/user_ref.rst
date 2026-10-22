@@ -1079,6 +1079,12 @@ User input reference
   
     **Type** ``bool``
   
+    **Default** ``False``
+  
+   :start_from_previous_mps: Whether to start the DMRG calculation from the optimal MPS of the previous orbital iteration (instead of a random MPS). 
+  
+    **Type** ``bool``
+  
     **Default** ``True``
   
    :prec: Precision parameter used to compute the one- and two-body integrals passed to the external solver. 

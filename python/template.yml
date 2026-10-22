@@ -1045,9 +1045,14 @@ sections:
           Tolerance for the split step in the DMRG calculation.
       - name: optimize_assembly
         type: bool
-        default: true
+        default: false
         docstring: |
           Whether to optimize the assembly of the Hamiltonian in the DMRG calculation.
+      - name: start_from_previous_mps
+        type: bool
+        default: true
+        docstring: |
+          Whether to start the DMRG calculation from the optimal MPS of the previous orbital iteration (instead of a random MPS).
       - name: prec
         type: float
         default: user['world_prec']

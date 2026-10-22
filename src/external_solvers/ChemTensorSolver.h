@@ -73,7 +73,7 @@ private:
     float tol_split;
     bool optimize_assembly;
     bool energy_correction = true;
-    bool start_from_previous_mps = false;
+    bool start_from_previous_mps;
 
     int32_t qnum_sector{};
 

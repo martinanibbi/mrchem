@@ -47,7 +47,8 @@ ChemTensorSolver::ChemTensorSolver(OrbitalVector &Phi, FockBuilder &F, Nuclei &n
     this->num_sweeps = dict_chemtensor["num_sweeps"];
     this->maxiter_lanczos = dict_chemtensor["maxiter_lanczos"];
     this->tol_split = dict_chemtensor["tol_split"];
-    this->optimize_assembly = false; //dict_chemtensor["optimize_assembly"];
+    this->optimize_assembly = dict_chemtensor["optimize_assembly"];
+    this->start_from_previous_mps = dict_chemtensor["start_from_previous_mps"];
 }
 
 ChemTensorSolver::~ChemTensorSolver() {
