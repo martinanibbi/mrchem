@@ -1166,6 +1166,7 @@ json driver::lag::run(const json &json_lag, Molecule &mol) {
     solver.setThreshold(-1.0, energy_thrs); // no orbital threshold: convergence only on the energy
 
     json_out["lag_solver"] = solver.optimize(mol, F, dmrg_solver);
+    json_out["success"] = json_out["lag_solver"]["converged"];
     std::cout << "optimization: done" << std::endl;
 
     return json_out;

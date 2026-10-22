@@ -88,8 +88,8 @@ int main(int argc, char **argv) {
         // Computed values
         json_out["lag_calculation"] = lag_out;
         json_out["properties"] = driver::print_properties(mol);
-        // Global success field: true if all requested calculations succeeded
-        json_out["success"] = detail::all_success(json_out); 
+        // Global success field: true if the Lagrangian optimization succeeded
+        json_out["success"] = lag_out["success"];
     
     }else {
         Molecule mol;

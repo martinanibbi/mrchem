@@ -35,10 +35,11 @@
 #include "qmoperators/two_electron/FockBuilder.h"
 #include "qmoperators/one_electron/NuclearOperator.h"
 #include "HelmholtzVector.h"
+#include "utils/print_utils.h"
 #include <iostream>
 
 using mrcpp::Printer;
-//using mrcpp::Timer;
+using mrcpp::Timer;
 using nlohmann::json;
 using PoissonOperator = mrcpp::PoissonOperator;
 
@@ -93,6 +94,7 @@ void LagrangianSolver::set_orbitals(OrbitalVector Phi_n){
 json LagrangianSolver::optimize(Molecule &mol, FockBuilder &F, ChemTensorSolver &S) {
     //printParameters("Optimize ground state orbitals");
 
+    Timer t_tot;
     json json_out;
 
     //Nuclei nucs = mol.getNuclei();
@@ -105,36 +107,61 @@ json LagrangianSolver::optimize(Molecule &mol, FockBuilder &F, ChemTensorSolver 
     make_uniform_type(*this->orbitals, true);
 
     bool converged = false;
-    
-    for(int i=0; i<this->maxIter; i++){
+    json_out["cycles"] = {};
+    for (int nIter = 0; nIter < this->maxIter; nIter++) {
+        json json_cycle;
+        std::stringstream o_header;
+        o_header << "Lagrangian cycle " << nIter;
+        mrcpp::print::header(1, o_header.str(), 0, '#');
+        Timer t_scf;
+
         // set integrals, run DMRG and calculate RDMS
         S.set_integrals(*this->orbitals);
         S.optimize();
-        this->energy.push_back(S.get_energy());
-        std::cout << "Energy:" << S.get_energy() << std::endl;
 
         // check if converged (before the update, so that orbitals and last energy match)
-        if(i>0){
-            if(std::abs(this->energy[i-1]-this->energy[i])<this->propThrs){
-                converged=true;
-                break;
-            }
+        // NOTE: no orbital threshold, convergence only on the energy
+        this->property.push_back(S.get_energy());
+        double err_p = getUpdate(this->property, this->property.size(), true);
+        converged = (nIter > 0) and checkConvergence(0.0, err_p);
+
+        json_cycle["energy_total"] = S.get_energy();
+        json_cycle["energy_update"] = err_p;
+        auto pprec = Printer::getPrecision();
+        print_utils::scalar(0, "Total energy", S.get_energy(), "(au)", 2 * pprec);
+        print_utils::scalar(0, "Energy difference", err_p, "(au)", pprec, true);
+
+        // update orbitals (not needed if converged or in the last iteration)
+        if (not converged and nIter < this->maxIter - 1) {
+            orbital_update(F, S);
+            make_uniform_type(*this->orbitals);
+
+            // reinforce orthonormalization immediately (Loewdin: Phi = S^(-1/2) Phi)
+            ComplexMatrix S_m12 = orbital::calc_lowdin_matrix(*this->orbitals);
+            mrcpp::rotate(*this->orbitals, S_m12, this->prec);
         }
-        // last iteration: no need to update the orbitals
-        if(i == this->maxIter-1)
-            break;
 
-        // update orbitals
-        orbital_update(F, S);
-        make_uniform_type(*this->orbitals);
+        t_scf.stop();
+        json_cycle["wall_time"] = t_scf.elapsed();
+        mrcpp::print::footer(1, t_scf, 2, '#');
 
-        // reinforce orthonormalization immediately (Loewdin: Phi = S^(-1/2) Phi)
-        ComplexMatrix S_m12 = orbital::calc_lowdin_matrix(*this->orbitals);
-        mrcpp::rotate(*this->orbitals, S_m12, this->prec);
+        json_out["cycles"].push_back(json_cycle);
+        if (converged) break;
     }
 
-    // end
     F.clear();
+
+    auto w0 = Printer::getWidth() - 1;
+    mrcpp::print::separator(0, '-');
+    if (converged) {
+        println(0, std::string((w0 - 45) / 2, ' ') << "Lagrangian optimization converged in " << this->property.size() - 1 << " iterations!");
+    } else {
+        println(0, std::string((w0 - 40) / 2, ' ') << "Lagrangian optimization did NOT converge!!!");
+    }
+    mrcpp::print::separator(0, '=', 2);
+    reset();
+
+    json_out["wall_time"] = t_tot.elapsed();
     json_out["converged"] = converged;
     return json_out;
 

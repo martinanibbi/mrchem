@@ -65,7 +65,6 @@ protected:
     double prec{};  ///< MW precision (world_prec)
     double threshold{};
     PoissonOperator_p P_p{};
-    std::vector<double> energy{};
     std::shared_ptr<OrbitalVector> orbitals{};
     
     void set_orbitals(OrbitalVector Phi);
