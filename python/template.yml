@@ -979,6 +979,11 @@ sections:
         default: 30
         docstring: |
           Maximum number of orbitals' optimization iterations.
+      - name: energy_thrs
+        type: float
+        default: user['world_prec']
+        docstring: |
+          Convergence threshold for the energy in the Lagrangian optimization.
       - name: write_checkpoint
         type: bool
         default: false

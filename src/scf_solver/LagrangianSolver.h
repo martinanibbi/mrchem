@@ -52,7 +52,7 @@ class FockBuilder;
 
 class LagrangianSolver : public SCFSolver {
 public:
-    LagrangianSolver();
+    LagrangianSolver(double prec);
     virtual ~LagrangianSolver() override = default;
 
     
@@ -62,8 +62,7 @@ public:
 
 protected:
     //std::string chkFile;  ///< Name of checkpoint file
-    double scf_tol{};
-    double prec{};
+    double prec{};  ///< MW precision (world_prec)
     double threshold{};
     PoissonOperator_p P_p{};
     std::vector<double> energy{};

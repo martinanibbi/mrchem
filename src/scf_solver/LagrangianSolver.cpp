@@ -69,9 +69,8 @@ void make_uniform_type(OrbitalVector &Phi, bool force_complex = false) {
 } // namespace
 
 // TODO: read all the settings in input
-LagrangianSolver::LagrangianSolver(){
-    this->scf_tol = 1e-3;
-    this->prec = 1e-3;
+LagrangianSolver::LagrangianSolver(double prec){
+    this->prec = prec;
     this->threshold = 1e-10;
     this->P_p = std::make_shared<PoissonOperator>(*MRA, this->prec);
 }
@@ -116,7 +115,7 @@ json LagrangianSolver::optimize(Molecule &mol, FockBuilder &F, ChemTensorSolver 
 
         // check if converged (before the update, so that orbitals and last energy match)
         if(i>0){
-            if(std::abs(this->energy[i-1]-this->energy[i])<this->scf_tol){
+            if(std::abs(this->energy[i-1]-this->energy[i])<this->propThrs){
                 converged=true;
                 break;
             }

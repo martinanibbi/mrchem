@@ -1033,6 +1033,12 @@ User input reference
     **Predicates**
       - ``value[-1] != '/'``
   
+   :energy_thrs: Convergence threshold for the energy in the Lagrangian optimization. 
+  
+    **Type** ``float``
+  
+    **Default** ``user['world_prec']``
+  
  :ExternalSolver: Define parameters for the external solver used for the Lagrangian optimization (only Chemtensor allowed for now). 
 
   :red:`Keywords`
