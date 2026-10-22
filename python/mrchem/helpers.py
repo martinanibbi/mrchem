@@ -344,6 +344,7 @@ def write_external_solver(user_dict):
         "tol_split": ext_dict["tol_split"],
         "optimize_assembly": ext_dict["optimize_assembly"],
         "start_from_previous_mps": ext_dict["start_from_previous_mps"],
+        "mps_seed": ext_dict["mps_seed"],
         "prec": ext_dict["prec"],
     }
 

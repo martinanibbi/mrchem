@@ -1087,6 +1087,12 @@ User input reference
   
     **Default** ``True``
   
+   :mps_seed: Seed for the random initial MPS of the DMRG calculation. If negative, a random seed is used. 
+  
+    **Type** ``int``
+  
+    **Default** ``-1``
+  
    :prec: Precision parameter used to compute the one- and two-body integrals passed to the external solver. 
   
     **Type** ``float``

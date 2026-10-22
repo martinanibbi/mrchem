@@ -702,6 +702,9 @@ def stencil() -> JSONDict:
                                         {   'default': True,
                                             'name': 'start_from_previous_mps',
                                             'type': 'bool'},
+                                        {   'default': -1,
+                                            'name': 'mps_seed',
+                                            'type': 'int'},
                                         {   'default': "user['world_prec']",
                                             'name': 'prec',
                                             'predicates': [   '1.0e-10 < value '

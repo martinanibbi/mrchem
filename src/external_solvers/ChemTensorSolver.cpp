@@ -35,6 +35,9 @@ extern "C" {
 #include "aligned_memory.h"
 }
 
+#include <limits>
+#include <random>
+
 #include "ChemTensorSolver.h"
 
 namespace mrchem {
@@ -49,6 +52,14 @@ ChemTensorSolver::ChemTensorSolver(OrbitalVector &Phi, FockBuilder &F, Nuclei &n
     this->tol_split = dict_chemtensor["tol_split"];
     this->optimize_assembly = dict_chemtensor["optimize_assembly"];
     this->start_from_previous_mps = dict_chemtensor["start_from_previous_mps"];
+
+    // seed of the random initial MPS: if negative, draw a random one
+    int seed = dict_chemtensor["mps_seed"];
+    if (seed < 0) {
+        std::random_device rd;
+        seed = std::uniform_int_distribution<int>(0, std::numeric_limits<int>::max())(rd);
+    }
+    this->mps_seed = seed;
 }
 
 ChemTensorSolver::~ChemTensorSolver() {
@@ -149,7 +160,7 @@ void ChemTensorSolver::optimize() {
         }
 
 		rng_state rng;
-		seed_rng_state(42, &rng);
+		seed_rng_state(this->mps_seed, &rng);
 
 		construct_random_mps(hamiltonian.a[0].dtype, hamiltonian.nsites, hamiltonian.d, hamiltonian.qsite, this->qnum_sector, this->max_vdim, &rng, this->psi);
 		if (!mps_is_consistent(this->psi)) 

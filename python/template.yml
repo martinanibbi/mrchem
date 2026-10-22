@@ -1053,6 +1053,11 @@ sections:
         default: true
         docstring: |
           Whether to start the DMRG calculation from the optimal MPS of the previous orbital iteration (instead of a random MPS).
+      - name: mps_seed
+        type: int
+        default: -1
+        docstring: |
+          Seed for the random initial MPS of the DMRG calculation. If negative, a random seed is used.
       - name: prec
         type: float
         default: user['world_prec']
