@@ -40,7 +40,7 @@ class FockBuilder;
 
 class ExternalSolver {
 public:
-    ExternalSolver(FockBuilder &F, Nuclei &nucs);
+    ExternalSolver(FockBuilder &F, Nuclei &nucs, double prec);
     virtual ~ExternalSolver() = default;
 
     double get_energy() { return this->energy; }

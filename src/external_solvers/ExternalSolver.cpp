@@ -37,11 +37,10 @@ namespace mrchem {
 class FockBuilder;
 // class PoissonOperator;
 
-ExternalSolver::ExternalSolver(FockBuilder &F, Nuclei &nucs){
+ExternalSolver::ExternalSolver(FockBuilder &F, Nuclei &nucs, double prec){
     this->F = F;
     this->nucs = nucs;
-    // TODO: read from input
-    this->prec = 1e-3;
+    this->prec = prec;
 }
 
 

@@ -39,7 +39,7 @@ extern "C" {
 
 namespace mrchem {
 
-ChemTensorSolver::ChemTensorSolver(OrbitalVector &Phi, FockBuilder &F, Nuclei &nucs, int Ne, int spin, json dict_chemtensor) : ExternalSolver(F, nucs) {
+ChemTensorSolver::ChemTensorSolver(OrbitalVector &Phi, FockBuilder &F, Nuclei &nucs, int Ne, int spin, json dict_chemtensor) : ExternalSolver(F, nucs, dict_chemtensor["prec"]) {
     this->qnum_sector = encode_quantum_number_pair(Ne, spin);
     std::cout << "Initialized ChemTensorSolver with Ne = " << Ne << " and spin = " << spin << std::endl;
 

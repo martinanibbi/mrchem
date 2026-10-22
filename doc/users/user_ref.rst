@@ -1075,6 +1075,15 @@ User input reference
   
     **Default** ``True``
   
+   :prec: Precision parameter used to compute the one- and two-body integrals passed to the external solver. 
+  
+    **Type** ``float``
+  
+    **Default** ``user['world_prec']``
+  
+    **Predicates**
+      - ``1.0e-10 < value < 1.0``
+  
  :PCM: Includes parameters related to the computation of the reaction field energy of a system in an environment within the Polarizable Continuum Model. 
 
   :red:`Sections`

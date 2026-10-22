@@ -341,7 +341,8 @@ def write_external_solver(user_dict):
         "num_sweeps": ext_dict["num_sweeps"],
         "maxiter_lanczos": ext_dict["maxiter_lanczos"],
         "tol_split": ext_dict["tol_split"],
-        "optimize_assembly": ext_dict["optimize_assembly"]
+        "optimize_assembly": ext_dict["optimize_assembly"],
+        "prec": ext_dict["prec"],
     }
 
     return solver_dict
