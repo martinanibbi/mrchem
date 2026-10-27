@@ -249,7 +249,7 @@ def scale(array, factors):
 
 
 def read_occ_mo(mol, mo_perm, mo_sign):
-    restricted = mol["HFTyp"] == "RHF"
+    restricted = mol["HFTyp"] in ("RHF", "CASSCF")
 
     mo_buf = [0.0 for _ in mo_perm]
 
