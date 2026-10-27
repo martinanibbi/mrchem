@@ -50,7 +50,6 @@ ChemTensorSolver::ChemTensorSolver(OrbitalVector &Phi, FockBuilder &F, Nuclei &n
     this->num_sweeps = dict_chemtensor["num_sweeps"];
     this->maxiter_lanczos = dict_chemtensor["maxiter_lanczos"];
     this->tol_split = dict_chemtensor["tol_split"];
-    this->optimize_assembly = dict_chemtensor["optimize_assembly"];
     this->start_from_previous_mps = dict_chemtensor["start_from_previous_mps"];
 
     // seed of the random initial MPS: if negative, draw a random one
@@ -140,7 +139,9 @@ void ChemTensorSolver::optimize() {
         this->assembly = new mpo_assembly{};
 
     mpo hamiltonian;
-    construct_spin_molecular_hamiltonian_mpo_assembly(this->tkin_tensor, this->velec_tensor, this->optimize_assembly, this->assembly);
+    // NOTE: optimized assembly (optimize = true) not implemented in chemtensor, and calculate_rdms
+    // relies on the fixed coefficient layout of the non-optimized construction
+    construct_spin_molecular_hamiltonian_mpo_assembly(this->tkin_tensor, this->velec_tensor, false, this->assembly);
     //this->assembly = std::make_shared<mpo_assembly>(assembly);
 
     mpo_from_assembly(this->assembly, &hamiltonian);

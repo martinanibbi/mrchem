@@ -71,7 +71,6 @@ private:
     int num_sweeps;
     int maxiter_lanczos;
     float tol_split;
-    bool optimize_assembly;
     bool energy_correction = true;
     bool start_from_previous_mps;
     int mps_seed{};

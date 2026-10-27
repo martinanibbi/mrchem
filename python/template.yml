@@ -1043,11 +1043,6 @@ sections:
         default: 1.0e-8
         docstring: |
           Tolerance for the split step in the DMRG calculation.
-      - name: optimize_assembly
-        type: bool
-        default: false
-        docstring: |
-          Whether to optimize the assembly of the Hamiltonian in the DMRG calculation.
       - name: start_from_previous_mps
         type: bool
         default: true

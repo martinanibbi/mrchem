@@ -1075,12 +1075,6 @@ User input reference
   
     **Default** ``1e-08``
   
-   :optimize_assembly: Whether to optimize the assembly of the Hamiltonian in the DMRG calculation. 
-  
-    **Type** ``bool``
-  
-    **Default** ``False``
-  
    :start_from_previous_mps: Whether to start the DMRG calculation from the optimal MPS of the previous orbital iteration (instead of a random MPS). 
   
     **Type** ``bool``
