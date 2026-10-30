@@ -65,6 +65,16 @@ void ExternalSolver::set_integrals(OrbitalVector &Phi) {
 
     // set nuclear repulsion energy
     this->E_nn = chemistry::compute_nuclear_repulsion(this->nucs);
+
+    // switch to the complex mode if the integrals are not real
+    if (this->real) {
+        double max_imag = std::max(this->one_body_integrals->imag().cwiseAbs().maxCoeff(),
+                                   Eigen::Tensor<double, 0>(this->two_body_integrals->imag().abs().maximum())());
+        if (max_imag > this->imag_threshold) {
+            std::cout << "Complex integrals (max imaginary part " << max_imag << "): switching to complex mode" << std::endl;
+            this->real = false;
+        }
+    }
 }
 
 // Private
@@ -110,12 +120,22 @@ void ExternalSolver::diagonalize_1rdm(){
     if (!this->basis_change)
         this->basis_change = std::make_shared<ComplexMatrix>(ComplexMatrix::Identity(L, L));
 
-    // diagonalize the one-body RDM (Hermitian solver)
-    Eigen::SelfAdjointEigenSolver<ComplexMatrix> solver(*this->one_rdm);
-    if (solver.info() != Eigen::Success)
-        MSG_ABORT("Diagonalization of one-body RDM failed");
-    // compute matrix of basis change
-    ComplexMatrix eigvecs = solver.eigenvectors();
+    // diagonalize the one-body RDM: in the real mode with the real solver. Otherwise Hermitian solver
+    ComplexMatrix eigvecs;
+    DoubleVector eigvals;
+    if (this->real) {
+        Eigen::SelfAdjointEigenSolver<DoubleMatrix> solver(this->one_rdm->real());
+        if (solver.info() != Eigen::Success)
+            MSG_ABORT("Diagonalization of one-body RDM failed");
+        eigvecs = solver.eigenvectors().cast<ComplexDouble>();
+        eigvals = solver.eigenvalues();
+    } else {
+        Eigen::SelfAdjointEigenSolver<ComplexMatrix> solver(*this->one_rdm);
+        if (solver.info() != Eigen::Success)
+            MSG_ABORT("Diagonalization of one-body RDM failed");
+        eigvecs = solver.eigenvectors();
+        eigvals = solver.eigenvalues();
+    }
     // reverse order (largest eigenvalue first)
     ComplexMatrix mat(L, L);
     for (int i = 0; i < L; i++)
@@ -126,7 +146,7 @@ void ExternalSolver::diagonalize_1rdm(){
     // one-body rdm in new basis
     *this->one_rdm = ComplexMatrix::Zero(L, L);
     for (int i = 0; i < L; i++)
-        (*this->one_rdm)(i, i) = solver.eigenvalues()(L - 1 - i);
+        (*this->one_rdm)(i, i) = eigvals(L - 1 - i);
     // one-body integral in new basis: with phi'_m = sum_i U(m,i) phi_i, h'(m,n) = <phi'_m|h|phi'_n> = (U^* h U^T)(m,n)
     *this->one_body_integrals = (*this->basis_change).conjugate() * (*this->one_body_integrals) * (*this->basis_change).transpose();
     // lagrange multipliers in the new basis

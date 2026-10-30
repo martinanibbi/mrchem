@@ -92,34 +92,38 @@ void ChemTensorSolver::set_dense_tensors(){
     }
 
     // NOTE: the row-major copies must be members, since the dense tensors only point to their data,
-    // which is read later in optimize()
-    this->one_body_integrals_rowmajor = std::make_shared<RowMajorMatrix>(*this->one_body_integrals);
-    auto &one_body_integrals_rowmajor = this->one_body_integrals_rowmajor;
-
-    this->tkin_tensor = new dense_tensor;
-    //this->tkin_tensor->data  = static_cast<void*>(this->one_body_integrals->data());
-    this->tkin_tensor->data  = static_cast<void*>(one_body_integrals_rowmajor->data());
-    this->tkin_tensor->dim   = new ct_long[2]{this->one_body_integrals->rows(), this->one_body_integrals->cols()};
-    this->tkin_tensor->dtype = CT_DOUBLE_COMPLEX;
-    this->tkin_tensor->ndim  = 2;
-
+    // which is read later in optimize(). In the real mode only the real parts are passed (real DMRG)
     // shuffle reverses index order: (i,j,k,l) -> (l,k,j,i) to go from col to row major
     Eigen::array<int, 4> reverse = {3, 2, 1, 0};
-    this->two_body_integrals_rowmajor = std::make_shared<RowMajorTensor>(
-        this->two_body_integrals->shuffle(reverse).swap_layout()
-    );
-    auto &two_body_integrals_rowmajor = this->two_body_integrals_rowmajor;
-    
+    void *tkin_data, *velec_data;
+    if (this->real) {
+        this->one_body_integrals_rowmajor_real = std::make_shared<RowMajorMatrixReal>(this->one_body_integrals->real());
+        this->two_body_integrals_rowmajor_real = std::make_shared<RowMajorTensorReal>(
+            this->two_body_integrals->real().shuffle(reverse).swap_layout()
+        );
+        tkin_data = static_cast<void*>(this->one_body_integrals_rowmajor_real->data());
+        velec_data = static_cast<void*>(this->two_body_integrals_rowmajor_real->data());
+    } else {
+        this->one_body_integrals_rowmajor = std::make_shared<RowMajorMatrix>(*this->one_body_integrals);
+        this->two_body_integrals_rowmajor = std::make_shared<RowMajorTensor>(
+            this->two_body_integrals->shuffle(reverse).swap_layout()
+        );
+        tkin_data = static_cast<void*>(this->one_body_integrals_rowmajor->data());
+        velec_data = static_cast<void*>(this->two_body_integrals_rowmajor->data());
+    }
+    const auto dtype = this->real ? CT_DOUBLE_REAL : CT_DOUBLE_COMPLEX;
+    const ct_long L = this->one_body_integrals->rows();
+
+    this->tkin_tensor = new dense_tensor;
+    this->tkin_tensor->data  = tkin_data;
+    this->tkin_tensor->dim   = new ct_long[2]{L, L};
+    this->tkin_tensor->dtype = dtype;
+    this->tkin_tensor->ndim  = 2;
+
     this->velec_tensor = new dense_tensor;
-    //this->velec_tensor->data  = static_cast<void*>(this->two_body_integrals->data()); //->shuffle(Eigen::array<int,4>{0,2,1,3})); //physicist's notation
-    this->velec_tensor->data  = static_cast<void*>(two_body_integrals_rowmajor->data()); 
-    this->velec_tensor->dim   = new ct_long[4]{
-        two_body_integrals_rowmajor->dimension(0), 
-        two_body_integrals_rowmajor->dimension(1), 
-        two_body_integrals_rowmajor->dimension(2), 
-        two_body_integrals_rowmajor->dimension(3)
-    };
-    this->velec_tensor->dtype = CT_DOUBLE_COMPLEX;
+    this->velec_tensor->data  = velec_data;
+    this->velec_tensor->dim   = new ct_long[4]{L, L, L, L};
+    this->velec_tensor->dtype = dtype;
     this->velec_tensor->ndim  = 4;
 }
 
@@ -149,8 +153,9 @@ void ChemTensorSolver::optimize() {
 		MSG_ABORT("internal consistency check for Molecular Hamiltonian MPO failed");
 	
     // initial state vector as MPS
-    // if requested, start from the MPS of the previous iteration (if any), otherwise from a random one
-    if (this->start_from_previous_mps && this->psi) {
+    // if requested, start from the MPS of the previous iteration (if any, and of the same data type
+    // as the Hamiltonian: not the case after switching from real to complex), otherwise from a random one
+    if (this->start_from_previous_mps && this->psi && this->psi->a[0].dtype == hamiltonian.a[0].dtype) {
         // nothing to do: dmrg_twosite uses this->psi as initial state
     } else {
         // free the MPS of the previous iteration before building a new one
@@ -206,10 +211,17 @@ void ChemTensorSolver::calculate_rdms() {
     // number of orbitals
     const int N = this->psi->nsites;
 
-    // vectors storing energy averages and gradients' coefficients
-    std::vector<double> avr(this->assembly->num_coeffs);
+    // energy average and gradients' coefficients (of the data type of the assembly: real in the real mode)
+    std::complex<double> avr;
     std::vector<std::complex<double>> dcoeff(this->assembly->num_coeffs);
-    operator_average_coefficient_gradient(this->assembly, this->psi, this->psi, avr.data(), dcoeff.data());
+    if (this->assembly->dtype == CT_DOUBLE_REAL) {
+        std::vector<double> dcoeff_real(this->assembly->num_coeffs);
+        operator_average_coefficient_gradient(this->assembly, this->psi, this->psi, &avr, dcoeff_real.data());
+        for (size_t i = 0; i < dcoeff_real.size(); i++)
+            dcoeff[i] = dcoeff_real[i];
+    } else {
+        operator_average_coefficient_gradient(this->assembly, this->psi, this->psi, &avr, dcoeff.data());
+    }
 
     // --- one-body RDM ---
     int c = 2;

@@ -80,6 +80,13 @@ void LagrangianSolver::set_orbitals(OrbitalVector Phi_n){
     this->orbitals = std::make_shared<OrbitalVector>(Phi_n);
 }
 
+/** @brief Switch to complex orbitals (and complex integrals and RDMs in the external solver) */
+void LagrangianSolver::set_complex_orbitals(ChemTensorSolver &S){
+    this->real_orbitals = false;
+    make_uniform_type(*this->orbitals, true);
+    S.set_real(false);
+}
+
 
 /** @brief Run Lagrangian orbital optimization
  *
@@ -101,10 +108,15 @@ json LagrangianSolver::optimize(Molecule &mol, FockBuilder &F, ChemTensorSolver 
 
     // initial orbitals
     set_orbitals(mol.getOrbitals());
-    // work with complex orbitals throughout: the RDMs from the external solver are complex,
-    // and the in-place add in the orbital update needs orbitals and coefficients of the same type
-    // TODO: distinguish between real and complex cases (real orbitals are cheaper)
-    make_uniform_type(*this->orbitals, true);
+    // real orbitals (cheaper) whenever possible: complex if requested or if any initial orbital is complex.
+    // The calculation switches to complex later if the integrals turn out complex
+    bool any_complex = false;
+    for (auto &phi : *this->orbitals)
+        if (phi.iscomplex()) any_complex = true;
+    this->real_orbitals = true;
+    S.set_real(true);
+    if (this->force_complex or any_complex) set_complex_orbitals(S);
+    print_utils::text(0, "Orbitals", this->real_orbitals ? "real" : "complex");
 
     bool converged = false;
     json_out["cycles"] = {};
@@ -117,6 +129,8 @@ json LagrangianSolver::optimize(Molecule &mol, FockBuilder &F, ChemTensorSolver 
 
         // set integrals, run DMRG and calculate RDMS
         S.set_integrals(*this->orbitals);
+        // the external solver switches to the complex mode if the integrals are complex
+        if (this->real_orbitals and not S.is_real()) set_complex_orbitals(S);
         S.optimize();
 
         // check if converged (before the update, so that orbitals and last energy match)
@@ -138,7 +152,12 @@ json LagrangianSolver::optimize(Molecule &mol, FockBuilder &F, ChemTensorSolver 
 
             // reinforce orthonormalization immediately (Loewdin: Phi = S^(-1/2) Phi)
             ComplexMatrix S_m12 = orbital::calc_lowdin_matrix(*this->orbitals);
+            if (this->real_orbitals) S_m12 = S_m12.real().cast<ComplexDouble>();
             mrcpp::rotate(*this->orbitals, S_m12, this->prec);
+
+            if (this->real_orbitals)
+                for (auto &phi : *this->orbitals)
+                    if (phi.iscomplex()) MSG_ABORT("Complex orbital in the real mode");
         }
 
         t_scf.stop();
@@ -215,7 +234,7 @@ void LagrangianSolver::orbital_basis_change(std::shared_ptr<ComplexMatrix> basis
         // phi_i = sum_j U(i,j) * Phi[j]
         std::vector<ComplexDouble> coeffs(L);
         for (int j = 0; j < L; j++)
-            coeffs[j] = (*basis_change)(i, j);
+            coeffs[j] = coeff((*basis_change)(i, j));
         Orbital phi_i;
         mrcpp::linear_combination(phi_i, coeffs, *this->orbitals, this->prec);
         new_Phi.push_back(phi_i);
@@ -239,7 +258,7 @@ void LagrangianSolver::orbital_update_one_body(FockBuilder &F, ChemTensorSolver 
             for (auto j = 0; j < L; j++) {
                 // multipliers' term (on new basis)
                 if (j != m)
-                    new_Phi[m].add(-lag_coeff(m, j) / one_rdm(m, m), (*this->orbitals)[j]);
+                    new_Phi[m].add(coeff(-lag_coeff(m, j) / one_rdm(m, m)), (*this->orbitals)[j]);
             }
         } else if (std::abs(lag_coeff(m, m)) > this->threshold) {
             std::cerr << "WARNING: lambda_m below threshold, but not helm_coeff'_mm !" << std::endl;
@@ -247,7 +266,7 @@ void LagrangianSolver::orbital_update_one_body(FockBuilder &F, ChemTensorSolver 
             new_Phi[m] = (*this->orbitals)[m].paramCopy(true);
             for (auto j = 0; j < L; j++) {
                 if (j != m)
-                    new_Phi[m].add(-lag_coeff(m, j) / lag_coeff(m, m), (*this->orbitals)[j]);
+                    new_Phi[m].add(coeff(-lag_coeff(m, j) / lag_coeff(m, m)), (*this->orbitals)[j]);
             }
         } else {
             std::cerr << "WARNING: Both lambda_m and helm_coeff'_mm below threshold" << std::endl;
@@ -297,8 +316,7 @@ void LagrangianSolver::orbital_update_two_body(FockBuilder &F, ChemTensorSolver 
                     else
                         continue; // both below threshold, skip
 
-                    ComplexDouble coeff = 2.0 * U_dE2(m, j, k, l) / denom;
-                    new_Phi[m].add(coeff, state);
+                    new_Phi[m].add(coeff(2.0 * U_dE2(m, j, k, l) / denom), state);
                 }
             }
         }

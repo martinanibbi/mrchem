@@ -1003,6 +1003,12 @@ User input reference
   
     **Default** ``30``
   
+   :force_complex: Use complex orbitals throughout. By default, the orbitals are kept real whenever possible (real initial orbitals and real integrals), and switched to complex only if needed. 
+  
+    **Type** ``bool``
+  
+    **Default** ``False``
+  
    :write_checkpoint: Write orbitals to disk in each iteration, file name ``<path_checkpoint>/<X/Y>_rsp_<direction>_idx_<0..N>``.  
   
     **Type** ``bool``

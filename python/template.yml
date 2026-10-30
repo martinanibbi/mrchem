@@ -984,6 +984,12 @@ sections:
         default: user['world_prec']
         docstring: |
           Convergence threshold for the energy in the Lagrangian optimization.
+      - name: force_complex
+        type: bool
+        default: false
+        docstring: |
+          Use complex orbitals throughout. By default, the orbitals are kept real whenever possible
+          (real initial orbitals and real integrals), and switched to complex only if needed.
       - name: write_checkpoint
         type: bool
         default: false

@@ -45,6 +45,8 @@ public:
 
     double get_energy() { return this->energy; }
     // void set_precision(double p){this->prec=p;}
+    bool is_real() const { return this->real; }
+    void set_real(bool real) { this->real = real; }
 
     void set_integrals(OrbitalVector &Phi);
     std::shared_ptr<ComplexMatrix> get_one_body_integrals() { return this->one_body_integrals; }
@@ -68,6 +70,8 @@ protected:
     double prec{};
     double energy{};
     double E_nn{};
+    bool real{true};  ///< real integrals and RDMs (stored as complex with zero imaginary part)
+    double imag_threshold{1.0e-10};  ///< integrals with larger imaginary parts switch to the complex mode
 
     std::shared_ptr<ComplexMatrix> one_body_integrals{};
     std::shared_ptr<ComplexTensorR4> two_body_integrals{};

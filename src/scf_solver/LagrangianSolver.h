@@ -57,6 +57,7 @@ public:
 
     
     OrbitalVector get_orbitals(){ return *this->orbitals; };
+    void set_force_complex(bool force_complex) { this->force_complex = force_complex; }
 
     nlohmann::json optimize(Molecule &mol, FockBuilder &F, ChemTensorSolver &S);
 
@@ -64,10 +65,14 @@ protected:
     //std::string chkFile;  ///< Name of checkpoint file
     double prec{};  ///< MW precision (world_prec)
     double threshold{};
+    bool force_complex{false};  ///< use complex orbitals even when real ones are possible
+    bool real_orbitals{true};   ///< current mode: real or complex orbitals
     PoissonOperator_p P_p{};
     std::shared_ptr<OrbitalVector> orbitals{};
-    
+
     void set_orbitals(OrbitalVector Phi);
+    void set_complex_orbitals(ChemTensorSolver &S);
+    ComplexDouble coeff(ComplexDouble c) const { return this->real_orbitals ? ComplexDouble(c.real(), 0.0) : c; }
 
     void orbital_update(FockBuilder &F, ChemTensorSolver &S);
     void orbital_basis_change(std::shared_ptr<ComplexMatrix> basis_change);
