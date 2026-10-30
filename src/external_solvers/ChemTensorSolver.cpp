@@ -252,8 +252,9 @@ void ChemTensorSolver::calculate_rdms() {
                           dg0(i, j, k, l) + dg0(j, i, l, k)
                         - dg1(j, i, k, l) - dg1(i, j, l, k));
 
+    // enforce hermiticity rdm2(i,j,k,l) = conj(rdm2(k,l,i,j)), with rdm2(i,j,k,l) = 1/2 <a+_i a+_j a_l a_k>
     ComplexTensorR4 rdm2_sym(N, N, N, N);
-    Eigen::array<int, 4> perm = {2, 1, 0, 3};
+    Eigen::array<int, 4> perm = {2, 3, 0, 1};
     rdm2_sym = 0.5 * (rdm2 + rdm2.conjugate().shuffle(perm));
     
     // store two body RDM in variable of parent class
