@@ -127,8 +127,8 @@ void ExternalSolver::diagonalize_1rdm(){
     *this->one_rdm = ComplexMatrix::Zero(L, L);
     for (int i = 0; i < L; i++)
         (*this->one_rdm)(i, i) = solver.eigenvalues()(L - 1 - i);
-    // one-body integral in new basis
-    *this->one_body_integrals = (*this->basis_change) * (*this->one_body_integrals) * (*this->basis_change).adjoint();
+    // one-body integral in new basis: with phi'_m = sum_i U(m,i) phi_i, h'(m,n) = <phi'_m|h|phi'_n> = (U^* h U^T)(m,n)
+    *this->one_body_integrals = (*this->basis_change).conjugate() * (*this->one_body_integrals) * (*this->basis_change).transpose();
     // lagrange multipliers in the new basis
     *this->lag_coeff = (*this->basis_change) * (*this->lag_coeff) * (*this->basis_change).adjoint();
 }
